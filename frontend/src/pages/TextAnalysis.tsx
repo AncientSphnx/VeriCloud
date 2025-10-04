@@ -6,33 +6,63 @@ import {
   Zap,
   BarChart3,
   MessageSquare,
-  Brain
+  Brain,
+  CheckCircle,
+  AlertCircle,
+  TrendingUp
 } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Label } from '../components/ui/label'
 import { AnalysisNavigation } from '../components/AnalysisNavigation'
 
+interface AnalysisResult {
+  prediction: string
+  confidence: number
+}
+
 export const TextAnalysis: React.FC = () => {
   const [textInput, setTextInput] = useState<string>('')
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [result, setResult] = useState<AnalysisResult | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const analyzeText = async () => {
     if (!textInput.trim()) return
 
     setIsAnalyzing(true)
+    setError(null)
+    setResult(null)
     
-    // TODO: Connect to your Python text detection model here
-    // Example: const result = await fetch('/api/text-analysis', { method: 'POST', body: { text: textInput } })
-    
-    // Placeholder - remove this when connecting to your Python model
-    alert('Text analysis will be connected to your Python model. Text ready for processing.')
-    
-    setIsAnalyzing(false)
+    try {
+      // Create FormData for the request
+      const formData = new FormData()
+      formData.append('text', textInput)
+      
+      // Call the backend API
+      const response = await fetch('http://127.0.0.1:8000/predict_text', {
+        method: 'POST',
+        body: formData,
+      })
+      
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`)
+      }
+      
+      const data = await response.json()
+      setResult(data)
+    } catch (err) {
+      console.error('Analysis error:', err)
+      setError(err instanceof Error ? err.message : 'Failed to analyze text. Please ensure the backend is running.')
+    } finally {
+      setIsAnalyzing(false)
+    }
   }
 
   const clearAnalysis = () => {
     setTextInput('')
+    setResult(null)
+    setError(null)
   }
 
   return (
@@ -153,16 +183,118 @@ export const TextAnalysis: React.FC = () => {
           transition={{ duration: 0.6, delay: 0.2 }}
         >
           <Card className="shadow-elegant-lg bg-card/50 backdrop-blur-sm border-muted/30">
-            <CardContent className="flex items-center justify-center h-96">
-              <div className="text-center space-y-4">
-                <Type className="h-16 w-16 text-muted-foreground mx-auto" />
-                <h3 className="text-xl font-display font-semibold text-muted-foreground">
-                  Ready for Text Analysis
-                </h3>
-                <p className="text-muted-foreground max-w-sm">
-                  Enter text in the input area and click "Analyze Text" to connect with your Python model.
-                </p>
-              </div>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-blue-600" />
+                Analysis Results
+              </CardTitle>
+              <CardDescription>
+                AI-powered deception detection results
+              </CardDescription>
+            </CardHeader>
+            
+            <CardContent>
+              {!result && !error && (
+                <div className="flex items-center justify-center h-64">
+                  <div className="text-center space-y-4">
+                    <Type className="h-16 w-16 text-muted-foreground mx-auto" />
+                    <h3 className="text-xl font-display font-semibold text-muted-foreground">
+                      Ready for Analysis
+                    </h3>
+                    <p className="text-muted-foreground max-w-sm">
+                      Enter text and click "Analyze Text" to see results
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              {error && (
+                <div className="flex items-center justify-center h-64">
+                  <div className="text-center space-y-4">
+                    <AlertCircle className="h-16 w-16 text-red-500 mx-auto" />
+                    <h3 className="text-xl font-display font-semibold text-red-600">
+                      Analysis Failed
+                    </h3>
+                    <p className="text-muted-foreground max-w-sm">
+                      {error}
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              {result && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.4 }}
+                  className="space-y-6"
+                >
+                  {/* Prediction Result */}
+                  <div className="text-center space-y-4 p-6 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <div className="flex items-center justify-center gap-3">
+                      {result.prediction === 'Truthful' ? (
+                        <CheckCircle className="h-12 w-12 text-green-600" />
+                      ) : (
+                        <AlertCircle className="h-12 w-12 text-red-600" />
+                      )}
+                      <h3 className="text-3xl font-display font-bold">
+                        <span className={result.prediction === 'Truthful' ? 'text-green-600' : 'text-red-600'}>
+                          {result.prediction}
+                        </span>
+                      </h3>
+                    </div>
+                    <p className="text-muted-foreground">
+                      The text appears to be {result.prediction.toLowerCase()}
+                    </p>
+                  </div>
+                  
+                  {/* Confidence Score */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4" />
+                        Confidence Score
+                      </Label>
+                      <span className="text-2xl font-bold text-blue-600">
+                        {(result.confidence * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                    
+                    {/* Progress Bar */}
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${result.confidence * 100}%` }}
+                        transition={{ duration: 1, ease: 'easeOut' }}
+                        className={`h-full rounded-full ${
+                          result.prediction === 'Truthful' 
+                            ? 'bg-gradient-to-r from-green-400 to-green-600' 
+                            : 'bg-gradient-to-r from-red-400 to-red-600'
+                        }`}
+                      />
+                    </div>
+                    
+                    <p className="text-sm text-muted-foreground">
+                      Model confidence in the prediction
+                    </p>
+                  </div>
+                  
+                  {/* Additional Info */}
+                  <div className="pt-4 border-t space-y-2">
+                    <h4 className="font-semibold text-sm">Analysis Details</h4>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Text Length</p>
+                        <p className="font-medium">{textInput.length} characters</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Model Used</p>
+                        <p className="font-medium">Logistic Regression</p>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
             </CardContent>
           </Card>
         </motion.div>

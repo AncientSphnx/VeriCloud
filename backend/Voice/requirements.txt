@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+python-multipart
+moviepy
+librosa
+soundfile
+torch
+numpy

@@ -10,17 +10,15 @@ import {
   Activity,
   Target,
   Mic,
-  Camera,
-  Type
+  Type,
+  Upload,
+  FileAudio,
+  AlertCircle
 } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
+import { Label } from '../components/ui/label'
 import { 
-  RadarChart, 
-  PolarGrid, 
-  PolarAngleAxis, 
-  PolarRadiusAxis, 
-  Radar, 
   ResponsiveContainer,
   BarChart,
   Bar,
@@ -28,70 +26,110 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  LineChart,
-  Line,
   PieChart,
   Pie,
   Cell
 } from 'recharts'
-import { MOCK_RESPONSES } from '../config/api'
 import { AnalysisNavigation } from '../components/AnalysisNavigation'
 
-export const FusionDashboard: React.FC = () => {
-  const [fusionResult, setFusionResult] = useState<any>(null)
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [historicalData, setHistoricalData] = useState<any[]>([])
+interface FusionResult {
+  final_prediction: string
+  final_confidence: number
+  final_score: number
+  breakdown: {
+    text: {
+      prediction: string
+      confidence: number
+      weight: number
+      contribution: number
+    }
+    voice: {
+      prediction: string
+      confidence: number
+      weight: number
+      contribution: number
+    }
+  }
+  reasoning: string
+  weights_used: Record<string, number>
+  errors?: Record<string, string>
+}
 
-  useEffect(() => {
-    // Generate mock historical data
-    const mockHistory = Array.from({ length: 10 }, (_, i) => ({
-      date: new Date(Date.now() - (9 - i) * 24 * 60 * 60 * 1000).toLocaleDateString(),
-      accuracy: 0.75 + Math.random() * 0.2,
-      voiceScore: 0.7 + Math.random() * 0.3,
-      faceScore: 0.6 + Math.random() * 0.4,
-      handwritingScore: 0.8 + Math.random() * 0.2,
-    }))
-    setHistoricalData(mockHistory)
-  }, [])
+export const FusionDashboard: React.FC = () => {
+  const [fusionResult, setFusionResult] = useState<FusionResult | null>(null)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [textInput, setTextInput] = useState<string>('')
+  const [audioFile, setAudioFile] = useState<File | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const runFusionAnalysis = async () => {
+    if (!textInput.trim() || !audioFile) {
+      setError('Please provide both text and audio file for fusion analysis.')
+      return
+    }
+
     setIsAnalyzing(true)
+    setError(null)
+    setFusionResult(null)
     
-    // TODO: Connect to your Python fusion model here
-    // Example: const result = await fetch('/api/fusion-analysis', { method: 'POST', body: analysisData })
-    
-    // Placeholder - remove this when connecting to your Python model
-    alert('Fusion analysis will be connected to your Python model. Combined analysis ready for processing.')
-    
-    setIsAnalyzing(false)
+    try {
+      const formData = new FormData()
+      formData.append('text', textInput)
+      formData.append('audio_file', audioFile)
+      
+      const response = await fetch('http://127.0.0.1:8002/predict_fusion', {
+        method: 'POST',
+        body: formData,
+      })
+      
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`)
+      }
+      
+      const data = await response.json()
+      setFusionResult(data)
+    } catch (err) {
+      console.error('Fusion analysis error:', err)
+      setError(err instanceof Error ? err.message : 'Failed to perform fusion analysis. Ensure all backends are running.')
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
+
+  const clearAll = () => {
+    setTextInput('')
+    setAudioFile(null)
+    setFusionResult(null)
+    setError(null)
   }
 
   // Prepare chart data
   const individualResults = fusionResult ? [
     { 
+      method: 'Text', 
+      confidence: fusionResult.breakdown.text.confidence * 100,
+      prediction: fusionResult.breakdown.text.prediction,
+      fill: '#3b82f6'
+    },
+    { 
       method: 'Voice', 
-      confidence: fusionResult.individualResults.voice.confidence * 100,
-      result: fusionResult.individualResults.voice.result,
-      fill: '#00d4ff'
-    },
-    { 
-      method: 'Face', 
-      confidence: fusionResult.individualResults.face.confidence * 100,
-      result: fusionResult.individualResults.face.result,
+      confidence: fusionResult.breakdown.voice.confidence * 100,
+      prediction: fusionResult.breakdown.voice.prediction,
       fill: '#8b5cf6'
-    },
-    { 
-      method: 'Handwriting', 
-      confidence: fusionResult.individualResults.handwriting.confidence * 100,
-      result: fusionResult.individualResults.handwriting.result,
-      fill: '#00ff88'
     }
   ] : []
 
   const methodDistribution = fusionResult ? [
-    { name: 'Voice Analysis', value: 33.3, fill: '#00d4ff' },
-    { name: 'Face Analysis', value: 33.3, fill: '#8b5cf6' },
-    { name: 'Handwriting Analysis', value: 33.4, fill: '#00ff88' }
+    { 
+      name: 'Text Analysis', 
+      value: fusionResult.weights_used.text * 100, 
+      fill: '#3b82f6' 
+    },
+    { 
+      name: 'Voice Analysis', 
+      value: fusionResult.weights_used.voice * 100, 
+      fill: '#8b5cf6' 
+    }
   ] : []
 
   return (
@@ -113,105 +151,212 @@ export const FusionDashboard: React.FC = () => {
         </p>
       </motion.div>
 
-      {/* Run Fusion Analysis */}
+      {/* Input Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Text Input */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
+          <Card className="shadow-elegant-lg bg-card/50 backdrop-blur-sm border-blue-600/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Type className="h-5 w-5 text-blue-600" />
+                Text Input
+              </CardTitle>
+              <CardDescription>
+                Enter the statement to analyze
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="textInput">Text</Label>
+                <textarea
+                  id="textInput"
+                  placeholder="Enter the text statement..."
+                  value={textInput}
+                  onChange={(e) => setTextInput(e.target.value)}
+                  className="min-h-[150px] resize-none flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={isAnalyzing}
+                />
+                <p className="text-sm text-muted-foreground">
+                  {textInput.length} characters
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Audio Input */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <Card className="shadow-elegant-lg bg-card/50 backdrop-blur-sm border-purple-600/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Mic className="h-5 w-5 text-purple-600" />
+                Audio Input
+              </CardTitle>
+              <CardDescription>
+                Upload the corresponding audio file
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="audioFile">Audio File</Label>
+                <div className="flex flex-col items-center justify-center border-2 border-dashed border-muted rounded-lg p-8 hover:border-primary/50 transition-colors">
+                  <input
+                    id="audioFile"
+                    type="file"
+                    accept="audio/*"
+                    onChange={(e) => setAudioFile(e.target.files?.[0] || null)}
+                    className="hidden"
+                    disabled={isAnalyzing}
+                  />
+                  <label htmlFor="audioFile" className="cursor-pointer text-center">
+                    {audioFile ? (
+                      <>
+                        <FileAudio className="h-12 w-12 text-purple-600 mx-auto mb-2" />
+                        <p className="text-sm font-medium">{audioFile.name}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {(audioFile.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-sm text-muted-foreground">Click to upload audio file</p>
+                        <p className="text-xs text-muted-foreground mt-1">WAV, MP3, or other audio formats</p>
+                      </>
+                    )}
+                  </label>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+
+      {/* Run Analysis Button */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.1 }}
+        transition={{ duration: 0.6, delay: 0.3 }}
+        className="flex gap-4 justify-center"
       >
-        <Card className="glass-morphism border-neon-pink/30">
-          <CardHeader className="text-center">
-            <CardTitle className="flex items-center justify-center space-x-2">
-              <BarChart3 className="h-6 w-6 text-neon-pink" />
-              <span>Multi-Modal Fusion Analysis</span>
-            </CardTitle>
-            <CardDescription>
-              Combine results from all three detection methods for enhanced accuracy
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <Button
-              onClick={runFusionAnalysis}
-              disabled={isAnalyzing}
-              variant="brand"
-              size="lg"
-              className="px-8"
-            >
-              {isAnalyzing ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
-                  Running Fusion Analysis...
-                </>
-              ) : (
-                <>
-                  <Zap className="h-4 w-4 mr-2" />
-                  Run Fusion Analysis
-                </>
-              )}
-            </Button>
-          </CardContent>
-        </Card>
+        <Button
+          onClick={runFusionAnalysis}
+          disabled={!textInput.trim() || !audioFile || isAnalyzing}
+          variant="brand"
+          size="lg"
+          className="px-12"
+        >
+          {isAnalyzing ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+              Running Fusion Analysis...
+            </>
+          ) : (
+            <>
+              <Zap className="h-4 w-4 mr-2" />
+              Run Fusion Analysis
+            </>
+          )}
+        </Button>
+        
+        {(textInput || audioFile) && (
+          <Button
+            onClick={clearAll}
+            variant="outline"
+            size="lg"
+            disabled={isAnalyzing}
+          >
+            Clear All
+          </Button>
+        )}
       </motion.div>
+
+      {/* Error Display */}
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <Card className="border-red-500/50 bg-red-500/10">
+            <CardContent className="flex items-center gap-3 py-4">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              <p className="text-red-500">{error}</p>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
       {fusionResult && (
         <>
-          {/* Results Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            <Card className="shadow-elegant-lg bg-card/50 backdrop-blur-sm border-muted/30">
-              <CardContent className="flex items-center justify-center h-96">
-                <div className="text-center space-y-4">
-                  <BarChart3 className="h-16 w-16 text-muted-foreground mx-auto" />
-                  <h3 className="text-xl font-display font-semibold text-muted-foreground">
-                    Ready for Fusion Analysis
-                  </h3>
-                  <p className="text-muted-foreground max-w-sm">
-                    Click "Run Fusion Analysis" to combine results from all detection methods using your Python model.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
           {/* Final Result */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
           >
-            <Card className={`glass-morphism ${
-              fusionResult.finalResult === 'Truth' 
-                ? 'border-neon-green/50' 
+            <Card className={`shadow-elegant-lg bg-card/50 backdrop-blur-sm ${
+              fusionResult.final_prediction === 'Truthful' 
+                ? 'border-green-500/50' 
                 : 'border-red-500/50'
             }`}>
               <CardHeader className="text-center">
-                <CardTitle className={`text-4xl ${
-                  fusionResult.finalResult === 'Truth' 
-                    ? 'text-neon-green' 
-                    : 'text-red-500'
-                }`}>
-                  {fusionResult.finalResult}
-                </CardTitle>
+                <div className="flex items-center justify-center gap-3 mb-2">
+                  {fusionResult.final_prediction === 'Truthful' ? (
+                    <CheckCircle className="h-12 w-12 text-green-600" />
+                  ) : (
+                    <AlertTriangle className="h-12 w-12 text-red-600" />
+                  )}
+                  <CardTitle className={`text-4xl font-display ${
+                    fusionResult.final_prediction === 'Truthful' 
+                      ? 'text-green-600' 
+                      : 'text-red-600'
+                  }`}>
+                    {fusionResult.final_prediction}
+                  </CardTitle>
+                </div>
                 <CardDescription className="text-lg">
-                  Overall Confidence: {(fusionResult.overallConfidence * 100).toFixed(1)}%
+                  Fusion Confidence: {(fusionResult.final_confidence * 100).toFixed(1)}%
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="w-full bg-muted rounded-full h-4 mb-4">
-                  <div
+              <CardContent className="space-y-4">
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${fusionResult.final_confidence * 100}%` }}
+                    transition={{ duration: 1, ease: 'easeOut' }}
                     className={`h-4 rounded-full ${
-                      fusionResult.finalResult === 'Truth' 
-                        ? 'bg-neon-green' 
-                        : 'bg-red-500'
+                      fusionResult.final_prediction === 'Truthful' 
+                        ? 'bg-gradient-to-r from-green-400 to-green-600' 
+                        : 'bg-gradient-to-r from-red-400 to-red-600'
                     }`}
-                    style={{ width: `${fusionResult.overallConfidence * 100}%` }}
                   />
                 </div>
-                <div className="text-center text-sm text-muted-foreground">
-                  Weighted Score: {(fusionResult.weightedScore * 100).toFixed(1)}%
+                <div className="text-center p-4 bg-muted/50 rounded-lg">
+                  <p className="text-sm font-medium mb-1">Analysis Reasoning</p>
+                  <p className="text-sm text-muted-foreground">
+                    {fusionResult.reasoning}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">Weighted Score</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {(fusionResult.final_score * 100).toFixed(1)}%
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">Models Combined</p>
+                    <p className="text-2xl font-bold text-purple-600">2</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -221,79 +366,81 @@ export const FusionDashboard: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
           >
-            <h2 className="text-2xl font-semibold mb-6 text-neon-blue neon-text">
-              Individual Method Results
+            <h2 className="text-2xl font-semibold mb-6 text-blue-600">
+              Individual Model Results
             </h2>
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Text Analysis Result */}
+              <Card className="shadow-elegant-lg bg-card/50 backdrop-blur-sm border-blue-600/30">
+                <CardHeader className="text-center">
+                  <Type className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+                  <CardTitle>Text Analysis</CardTitle>
+                  <CardDescription className={`text-lg font-semibold ${
+                    fusionResult.breakdown.text.prediction === 'Truthful' ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {fusionResult.breakdown.text.prediction}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-blue-600 mb-2">
+                      {(fusionResult.breakdown.text.confidence * 100).toFixed(1)}%
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-2">Model Confidence</p>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div
+                        className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${fusionResult.breakdown.text.confidence * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                  <div className="pt-3 border-t space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Weight:</span>
+                      <span className="font-medium">{(fusionResult.breakdown.text.weight * 100).toFixed(0)}%</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Contribution:</span>
+                      <span className="font-medium">{(fusionResult.breakdown.text.contribution * 100).toFixed(1)}%</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Voice Analysis Result */}
-              <Card className="glass-morphism border-neon-blue/30">
+              <Card className="shadow-elegant-lg bg-card/50 backdrop-blur-sm border-purple-600/30">
                 <CardHeader className="text-center">
-                  <Mic className="h-5 w-5 text-blue-600" />
+                  <Mic className="h-8 w-8 text-purple-600 mx-auto mb-2" />
                   <CardTitle>Voice Analysis</CardTitle>
-                  <CardDescription>
-                    {fusionResult.individualResults.voice.result}
+                  <CardDescription className={`text-lg font-semibold ${
+                    fusionResult.breakdown.voice.prediction === 'Truthful' ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {fusionResult.breakdown.voice.prediction}
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-3">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-neon-blue mb-2">
-                      {(fusionResult.individualResults.voice.confidence * 100).toFixed(1)}%
+                    <div className="text-3xl font-bold text-purple-600 mb-2">
+                      {(fusionResult.breakdown.voice.confidence * 100).toFixed(1)}%
                     </div>
+                    <p className="text-xs text-muted-foreground mb-2">Model Confidence</p>
                     <div className="w-full bg-muted rounded-full h-2">
                       <div
-                        className="bg-neon-blue h-2 rounded-full"
-                        style={{ width: `${fusionResult.individualResults.voice.confidence * 100}%` }}
+                        className="bg-purple-600 h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${fusionResult.breakdown.voice.confidence * 100}%` }}
                       />
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-
-              {/* Face Analysis Result */}
-              <Card className="glass-morphism border-neon-purple/30">
-                <CardHeader className="text-center">
-                  <Camera className="h-8 w-8 text-neon-purple mx-auto mb-2" />
-                  <CardTitle>Face Analysis</CardTitle>
-                  <CardDescription>
-                    {fusionResult.individualResults.face.result}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-neon-purple mb-2">
-                      {(fusionResult.individualResults.face.confidence * 100).toFixed(1)}%
+                  <div className="pt-3 border-t space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Weight:</span>
+                      <span className="font-medium">{(fusionResult.breakdown.voice.weight * 100).toFixed(0)}%</span>
                     </div>
-                    <div className="w-full bg-muted rounded-full h-2">
-                      <div
-                        className="bg-neon-purple h-2 rounded-full"
-                        style={{ width: `${fusionResult.individualResults.face.confidence * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Handwriting Analysis Result */}
-              <Card className="glass-morphism border-neon-green/30">
-                <CardHeader className="text-center">
-                  <Type className="h-5 w-5 text-green-600" />
-                  <CardTitle>Handwriting Analysis</CardTitle>
-                  <CardDescription>
-                    {fusionResult.individualResults.handwriting.result}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-neon-green mb-2">
-                      {(fusionResult.individualResults.handwriting.confidence * 100).toFixed(1)}%
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2">
-                      <div
-                        className="bg-neon-green h-2 rounded-full"
-                        style={{ width: `${fusionResult.individualResults.handwriting.confidence * 100}%` }}
-                      />
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Contribution:</span>
+                      <span className="font-medium">{(fusionResult.breakdown.voice.contribution * 100).toFixed(1)}%</span>
                     </div>
                   </div>
                 </CardContent>
@@ -305,21 +452,24 @@ export const FusionDashboard: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
           >
-            <Card className="glass-morphism border-neon-blue/30">
+            <Card className="shadow-elegant-lg bg-card/50 backdrop-blur-sm border-muted/30">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Target className="h-5 w-5 text-neon-blue" />
-                  <span>Method Confidence Comparison</span>
+                  <BarChart3 className="h-5 w-5 text-blue-600" />
+                  <span>Model Confidence Comparison</span>
                 </CardTitle>
+                <CardDescription>
+                  Side-by-side comparison of individual model confidences
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={individualResults}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                     <XAxis dataKey="method" stroke="#9CA3AF" />
-                    <YAxis stroke="#9CA3AF" />
+                    <YAxis stroke="#9CA3AF" domain={[0, 100]} />
                     <Tooltip 
                       contentStyle={{ 
                         backgroundColor: '#1F2937', 
@@ -338,11 +488,17 @@ export const FusionDashboard: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
+            transition={{ duration: 0.6, delay: 0.7 }}
           >
-            <Card className="glass-morphism border-neon-purple/30">
+            <Card className="shadow-elegant-lg bg-card/50 backdrop-blur-sm border-muted/30">
               <CardHeader>
-                <CardTitle>Analysis Method Distribution</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-purple-600" />
+                  Model Weight Distribution
+                </CardTitle>
+                <CardDescription>
+                  How each model contributes to the final decision
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={250}>
@@ -353,7 +509,7 @@ export const FusionDashboard: React.FC = () => {
                       cy="50%"
                       outerRadius={80}
                       dataKey="value"
-                      label={({ name, value }) => `${name}: ${value}%`}
+                      label={({ name, value }) => `${name.split(' ')[0]}: ${value.toFixed(0)}%`}
                     >
                       {methodDistribution.map((entry: any, index: number) => (
                         <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -374,68 +530,6 @@ export const FusionDashboard: React.FC = () => {
         </>
       )}
 
-      {/* Historical Performance */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.6 }}
-      >
-        <Card className="glass-morphism border-neon-green/30">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <TrendingUp className="h-5 w-5 text-neon-green" />
-              <span>Historical Performance</span>
-            </CardTitle>
-            <CardDescription>
-              Accuracy trends over the past 10 analyses
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={historicalData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="date" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1F2937', 
-                    border: '1px solid #374151',
-                    borderRadius: '8px'
-                  }} 
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="accuracy" 
-                  stroke="#00ff88" 
-                  strokeWidth={2}
-                  name="Overall Accuracy"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="voiceScore" 
-                  stroke="#00d4ff" 
-                  strokeWidth={2}
-                  name="Voice Score"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="faceScore" 
-                  stroke="#8b5cf6" 
-                  strokeWidth={2}
-                  name="Face Score"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="handwritingScore" 
-                  stroke="#ff0080" 
-                  strokeWidth={2}
-                  name="Handwriting Score"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </motion.div>
     </div>
   )
 }
