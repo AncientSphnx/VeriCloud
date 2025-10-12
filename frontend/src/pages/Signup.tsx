@@ -47,8 +47,8 @@ export const Signup: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-6">
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-600/5 via-green-600/5 to-blue-600/5" />
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900/20 via-slate-800/10 to-slate-900/20" />
       
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -56,12 +56,12 @@ export const Signup: React.FC = () => {
         transition={{ duration: 0.6 }}
         className="relative w-full max-w-md"
       >
-        <Card className="shadow-elegant-lg bg-card/50 backdrop-blur-sm border-purple-600/30">
+        <Card className="shadow-elegant-lg bg-slate-900/95 backdrop-blur-sm border-slate-600/50">
           <CardHeader className="text-center">
-            <CardTitle className="text-3xl font-display font-bold text-purple-600">
+            <CardTitle className="text-3xl font-display font-bold text-purple-400">
               Create Account
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-slate-300">
               Join VeriCloud today
             </CardDescription>
           </CardHeader>
@@ -69,9 +69,9 @@ export const Signup: React.FC = () => {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="name" className="text-slate-200">Full Name</Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <User className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                   <Input
                     id="name"
                     type="text"
@@ -85,9 +85,9 @@ export const Signup: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="username" className="text-slate-200">Username</Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <User className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                   <Input
                     id="username"
                     type="text"
@@ -101,9 +101,9 @@ export const Signup: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-slate-200">Email</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                   <Input
                     id="email"
                     type="email"
@@ -117,9 +117,9 @@ export const Signup: React.FC = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="text-slate-200">Password</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
@@ -132,7 +132,7 @@ export const Signup: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-50"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -140,9 +140,9 @@ export const Signup: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label htmlFor="confirmPassword" className="text-slate-200">Confirm Password</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                   <Input
                     id="confirmPassword"
                     type="password"
@@ -170,16 +170,16 @@ export const Signup: React.FC = () => {
             </form>
 
             <div className="mt-6 text-center">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-slate-400">
                 Already have an account?{' '}
-                <Link to="/login" className="text-purple-600 hover:underline">
+                <Link to="/login" className="text-purple-400 hover:underline">
                   Sign in
                 </Link>
               </p>
             </div>
 
             <div className="mt-4 text-center">
-              <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
+              <Link to="/" className="text-sm text-slate-400 hover:text-slate-50">
                 ← Back to Home
               </Link>
             </div>

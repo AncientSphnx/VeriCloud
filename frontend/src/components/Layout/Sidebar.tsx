@@ -33,9 +33,10 @@ const sidebarItems = [
 interface SidebarProps {
   isOpen: boolean
   onClose: () => void
+  darkMode: boolean
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, darkMode }) => {
   const location = useLocation()
   const { user, logout } = useAuth()
 
@@ -61,7 +62,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           <div className="p-6 border-b border-border">
           <Link to="/about" onClick={onClose} className="block">
             <img 
-              src="/logo1.png" 
+              src={darkMode ? "/logo1.png" : "/logo4.png"} 
               alt="AI Lie Detection Logo" 
               className="w-full h-auto object-contain" 
             />

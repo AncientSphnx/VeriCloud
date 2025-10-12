@@ -1,155 +1,189 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { 
-  FileText, 
-  Download, 
-  Filter, 
+import {
+  FileText,
+  Download,
+  Filter,
   Search,
   Calendar,
   BarChart3,
   TrendingUp,
-  Eye
+  Eye,
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { formatDate } from '../lib/utils'
+import { useAuth } from '../contexts/AuthContext'
+import api from '../services/api'
 
 interface Report {
-  id: string
-  type: 'Voice' | 'Face' | 'Handwriting' | 'Fusion'
-  result: 'Truth' | 'Lie'
-  confidence: number
-  timestamp: Date
-  duration?: number
-  notes?: string
+  _id: string
+  user_id: string
+  session_id: string
+  report_type: 'voice_analysis' | 'face_analysis' | 'text_analysis' | 'combined_analysis' | 'session_summary'
+  data: any
+  s3_file_path?: string
+  timestamp: string
+  status: 'completed' | 'processing' | 'failed'
+  metadata?: {
+    confidence_score?: number
+    processing_time_ms?: number
+    data_sources?: string[]
+  }
+}
+
+interface DashboardData {
+  period_days: number
+  total_reports: number
+  completed_reports: number
+  completion_rate: number
+  report_types: { [key: string]: number }
+  average_confidence: number
+  recent_reports: Report[]
 }
 
 export const Reports: React.FC = () => {
+  const { user } = useAuth()
   const [reports, setReports] = useState<Report[]>([])
   const [filteredReports, setFilteredReports] = useState<Report[]>([])
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<string>('all')
-  const [filterResult, setFilterResult] = useState<string>('all')
+  const [filterStatus, setFilterStatus] = useState<string>('all')
 
+  // Fetch user reports and dashboard data
   useEffect(() => {
-    // Generate mock reports data
-    const mockReports: Report[] = [
-      {
-        id: '1',
-        type: 'Voice',
-        result: 'Truth',
-        confidence: 87,
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-        duration: 45,
-        notes: 'Clear speech patterns, consistent pitch'
-      },
-      {
-        id: '2',
-        type: 'Face',
-        result: 'Lie',
-        confidence: 73,
-        timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000),
-        duration: 120,
-        notes: 'Micro-expressions detected, eye movement patterns'
-      },
-      {
-        id: '3',
-        type: 'Handwriting',
-        result: 'Truth',
-        confidence: 91,
-        timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-        notes: 'Consistent pressure and slant'
-      },
-      {
-        id: '4',
-        type: 'Fusion',
-        result: 'Truth',
-        confidence: 84,
-        timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-        duration: 180,
-        notes: 'Combined analysis from all three methods'
-      },
-      {
-        id: '5',
-        type: 'Voice',
-        result: 'Lie',
-        confidence: 68,
-        timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-        duration: 60,
-        notes: 'Irregular pitch variations detected'
-      },
-      {
-        id: '6',
-        type: 'Face',
-        result: 'Truth',
-        confidence: 79,
-        timestamp: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
-        duration: 90,
-        notes: 'Natural facial expressions observed'
+    if (user) {
+      fetchReports()
+      fetchDashboardData()
+    }
+  }, [user])
+
+  // Filter reports when data or filters change
+  useEffect(() => {
+    if (reports.length > 0) {
+      let filtered = reports
+
+      // Filter by search term
+      if (searchTerm) {
+        filtered = filtered.filter(report =>
+          report.report_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          report.session_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          JSON.stringify(report.data).toLowerCase().includes(searchTerm.toLowerCase())
+        )
       }
-    ]
-    setReports(mockReports)
-    setFilteredReports(mockReports)
-  }, [])
 
+      // Filter by type
+      if (filterType !== 'all') {
+      }
+
+      // Filter by status
+      if (filterStatus !== 'all') {
+        filtered = filtered.filter(report => report.status === filterStatus)
+      }
+
+      setFilteredReports(filtered)
+    }
+  }, [reports, searchTerm, filterType, filterStatus])
+
+  const fetchReports = useCallback(async () => {
+    if (!user) return
+
+    try {
+      setLoading(true)
+      setError(null)
+
+      const token = localStorage.getItem('token')
+      if (!token) {
+        setError('No authentication token found')
+        return
+      }
+
+      const response = await api.reports.getUserReports(user.id, token, 100, 0)
+
+      if (response.success) {
+        setReports(response.reports || [])
+      } else {
+        setError(response.message || 'Failed to fetch reports')
+      }
+    } catch (error) {
+      setError('Network error while fetching reports')
+      console.error('Reports fetch error:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [user])
   useEffect(() => {
-    let filtered = reports
-
-    // Filter by search term
-    if (searchTerm) {
-      filtered = filtered.filter(report => 
-        report.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        report.result.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        report.notes?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+    if (user) {
+      fetchReports()
+      fetchDashboardData()
     }
+  }, [user, fetchReports])
 
-    // Filter by type
-    if (filterType !== 'all') {
-      filtered = filtered.filter(report => report.type === filterType)
+  const fetchDashboardData = async () => {
+    if (!user) return
+
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) return
+
+      const response = await api.reports.getReportsDashboard(user.id, token, 30)
+
+      if (response.success) {
+        setDashboardData(response.dashboard)
+      }
+    } catch (error) {
+      console.error('Dashboard data fetch error:', error)
     }
-
-    // Filter by result
-    if (filterResult !== 'all') {
-      filtered = filtered.filter(report => report.result === filterResult)
-    }
-
-    setFilteredReports(filtered)
-  }, [reports, searchTerm, filterType, filterResult])
+  }
 
   const getTypeColor = (type: string) => {
     const colors = {
-      Voice: 'text-neon-blue',
-      Face: 'text-neon-purple',
-      Handwriting: 'text-neon-green',
-      Fusion: 'text-neon-pink'
+      voice_analysis: 'text-blue-600',
+      face_analysis: 'text-purple-600',
+      text_analysis: 'text-green-600',
+      combined_analysis: 'text-pink-600',
+      session_summary: 'text-yellow-600'
     }
     return colors[type as keyof typeof colors] || 'text-muted-foreground'
   }
-
-  const getTypeBorder = (type: string) => {
-    const borders = {
-      Voice: 'border-neon-blue/30',
-      Face: 'border-neon-purple/30',
-      Handwriting: 'border-neon-green/30',
-      Fusion: 'border-neon-pink/30'
+  const getStatusColor = (status: string) => {
+    const colors = {
+      completed: 'text-green-600',
+      processing: 'text-yellow-600',
+      failed: 'text-red-600'
     }
-    return borders[type as keyof typeof borders] || 'border-muted/30'
+    return colors[status as keyof typeof colors] || 'text-muted-foreground'
+  }
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed': return '✅'
+      case 'processing': return '⏳'
+      case 'failed': return '❌'
+      default: return '❓'
+    }
   }
 
   const exportReports = () => {
+    if (filteredReports.length === 0) return
+
     const csvContent = [
-      ['ID', 'Type', 'Result', 'Confidence', 'Timestamp', 'Duration', 'Notes'],
+      ['ID', 'Type', 'Status', 'Created', 'Session ID', 'Confidence Score', 'S3 File'],
       ...filteredReports.map(report => [
-        report.id,
-        report.type,
-        report.result,
-        `${report.confidence}%`,
-        formatDate(report.timestamp),
-        report.duration ? `${report.duration}s` : 'N/A',
-        report.notes || ''
+        report._id,
+        report.report_type,
+        report.status,
+        formatDate(new Date(report.timestamp)),
+        report.session_id,
+        report.metadata?.confidence_score || 'N/A',
+        report.s3_file_path || 'N/A'
       ])
     ].map(row => row.join(',')).join('\n')
 
@@ -157,16 +191,48 @@ export const Reports: React.FC = () => {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'lie-detection-reports.csv'
+    a.download = `lie-detection-reports-${user?.id}.csv`
     a.click()
     URL.revokeObjectURL(url)
   }
 
-  const stats = {
-    total: reports.length,
-    truthCount: reports.filter(r => r.result === 'Truth').length,
-    lieCount: reports.filter(r => r.result === 'Lie').length,
-    avgConfidence: Math.round(reports.reduce((sum, r) => sum + r.confidence, 0) / reports.length)
+  // Calculate stats from real data
+  const stats = dashboardData ? {
+    total: dashboardData.total_reports,
+    completed: dashboardData.completed_reports,
+    completionRate: dashboardData.completion_rate,
+    avgConfidence: Math.round(dashboardData.average_confidence)
+  } : {
+    total: 0,
+    completed: 0,
+    completionRate: 0,
+    avgConfidence: 0
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
+          <p className="text-muted-foreground">Loading reports...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <AlertCircle className="h-8 w-8 mx-auto mb-4 text-red-500" />
+          <p className="text-red-500 mb-4">{error}</p>
+          <Button onClick={fetchReports} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -177,7 +243,7 @@ export const Reports: React.FC = () => {
         transition={{ duration: 0.6 }}
       >
         <h1 className="text-4xl font-bold mb-2">
-          <span className="text-neon-blue neon-text">Reports & Analytics</span>
+          <span className="text-blue-600">Reports & Analytics</span>
         </h1>
         <p className="text-muted-foreground text-lg">
           View and analyze your lie detection history and performance metrics
@@ -191,50 +257,50 @@ export const Reports: React.FC = () => {
         transition={{ duration: 0.6, delay: 0.1 }}
         className="grid grid-cols-1 md:grid-cols-4 gap-6"
       >
-        <Card className="glass-morphism border-neon-blue/30">
+        <Card className="glass-morphism border-blue-600/30">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Reports</p>
-                <p className="text-2xl font-bold text-neon-blue">{stats.total}</p>
+                <p className="text-2xl font-bold text-blue-600">{stats.total}</p>
               </div>
-              <FileText className="h-8 w-8 text-neon-blue/60" />
+              <FileText className="h-8 w-8 text-blue-600/60" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="glass-morphism border-neon-green/30">
+        <Card className="glass-morphism border-green-600/30">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Truth Detected</p>
-                <p className="text-2xl font-bold text-neon-green">{stats.truthCount}</p>
+                <p className="text-sm text-muted-foreground">Completed</p>
+                <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
               </div>
-              <TrendingUp className="h-8 w-8 text-neon-green/60" />
+              <TrendingUp className="h-8 w-8 text-green-600/60" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="glass-morphism border-red-500/30">
+        <Card className="glass-morphism border-purple-600/30">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Lies Detected</p>
-                <p className="text-2xl font-bold text-red-500">{stats.lieCount}</p>
+                <p className="text-sm text-muted-foreground">Success Rate</p>
+                <p className="text-2xl font-bold text-purple-600">{stats.completionRate.toFixed(1)}%</p>
               </div>
-              <Eye className="h-8 w-8 text-red-500/60" />
+              <BarChart3 className="h-8 w-8 text-purple-600/60" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="glass-morphism border-neon-purple/30">
+        <Card className="glass-morphism border-pink-600/30">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Avg Confidence</p>
-                <p className="text-2xl font-bold text-neon-purple">{stats.avgConfidence}%</p>
+                <p className="text-2xl font-bold text-pink-600">{stats.avgConfidence}%</p>
               </div>
-              <BarChart3 className="h-8 w-8 text-neon-purple/60" />
+              <Eye className="h-8 w-8 text-pink-600/60" />
             </div>
           </CardContent>
         </Card>
@@ -278,35 +344,44 @@ export const Reports: React.FC = () => {
                   className="w-full h-10 px-3 py-2 bg-background border border-input rounded-md text-sm"
                 >
                   <option value="all">All Types</option>
-                  <option value="Voice">Voice</option>
-                  <option value="Face">Face</option>
-                  <option value="Handwriting">Handwriting</option>
-                  <option value="Fusion">Fusion</option>
+                  <option value="voice_analysis">Voice Analysis</option>
+                  <option value="face_analysis">Face Analysis</option>
+                  <option value="text_analysis">Text Analysis</option>
+                  <option value="combined_analysis">Combined Analysis</option>
+                  <option value="session_summary">Session Summary</option>
                 </select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="result-filter">Result</Label>
+                <Label htmlFor="status-filter">Status</Label>
                 <select
-                  id="result-filter"
-                  value={filterResult}
-                  onChange={(e) => setFilterResult(e.target.value)}
+                  id="status-filter"
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
                   className="w-full h-10 px-3 py-2 bg-background border border-input rounded-md text-sm"
                 >
-                  <option value="all">All Results</option>
-                  <option value="Truth">Truth</option>
-                  <option value="Lie">Lie</option>
+                  <option value="all">All Status</option>
+                  <option value="completed">Completed</option>
+                  <option value="processing">Processing</option>
+                  <option value="failed">Failed</option>
                 </select>
               </div>
 
-              <div className="flex items-end">
+              <div className="flex items-end space-x-2">
                 <Button
                   onClick={exportReports}
                   variant="outline"
-                  className="w-full"
+                  disabled={filteredReports.length === 0}
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Export CSV
+                </Button>
+                <Button
+                  onClick={fetchReports}
+                  variant="outline"
+                  size="icon"
+                >
+                  <RefreshCw className="h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -331,7 +406,7 @@ export const Reports: React.FC = () => {
             <div className="divide-y divide-border">
               {filteredReports.map((report, index) => (
                 <motion.div
-                  key={report.id}
+                  key={report._id}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.6, delay: 0.4 + index * 0.05 }}
@@ -339,40 +414,59 @@ export const Reports: React.FC = () => {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
-                      <div className={`w-3 h-3 rounded-full ${
-                        report.result === 'Truth' ? 'bg-neon-green' : 'bg-red-500'
-                      }`} />
+                      <div className={`w-3 h-3 rounded-full ${getStatusColor(report.status)}`} />
                       <div>
                         <div className="flex items-center space-x-2">
-                          <span className={`font-medium ${getTypeColor(report.type)}`}>
-                            {report.type} Analysis
+                          <span className={`font-medium ${getTypeColor(report.report_type)}`}>
+                            {report.report_type.replace('_', ' ').toUpperCase()}
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            #{report.id}
+                            #{report._id.slice(-8)}
+                          </span>
+                          <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(report.status)}`}>
+                            {getStatusIcon(report.status)} {report.status}
                           </span>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          {formatDate(report.timestamp)}
-                          {report.duration && ` • ${report.duration}s`}
+                          {formatDate(new Date(report.timestamp))}
+                          • Session: {report.session_id.slice(-8)}
                         </p>
-                        {report.notes && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {report.notes}
+                        {report.metadata?.confidence_score && (
+                          <p className="text-sm text-muted-foreground">
+                            Confidence: {report.metadata.confidence_score}%
                           </p>
                         )}
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className={`font-semibold text-lg ${
-                        report.result === 'Truth' ? 'text-neon-green' : 'text-red-500'
-                      }`}>
-                        {report.result}
-                      </p>
+                      {report.s3_file_path && (
+                        <Button variant="outline" size="sm" className="mb-2">
+                          <Download className="h-4 w-4 mr-2" />
+                          Download
+                        </Button>
+                      )}
                       <p className="text-sm text-muted-foreground">
-                        {report.confidence}% confidence
+                        Created: {formatDate(new Date(report.timestamp))}
                       </p>
                     </div>
                   </div>
+
+                  {/* Show sample data if available */}
+                  {report.data && Object.keys(report.data).length > 0 && (
+                    <div className="mt-4 p-3 bg-muted/30 rounded-md">
+                      <p className="text-sm font-medium mb-2">Analysis Results:</p>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                        {Object.entries(report.data).slice(0, 4).map(([key, value]) => (
+                          <div key={key}>
+                            <span className="text-muted-foreground">{key}:</span>
+                            <span className="ml-1 font-mono">
+                              {typeof value === 'object' ? JSON.stringify(value).slice(0, 30) + '...' : String(value).slice(0, 20)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -380,11 +474,13 @@ export const Reports: React.FC = () => {
             {filteredReports.length === 0 && (
               <div className="p-16 text-center">
                 <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">No Reports Found</h3>
+                <h3 className="text-xl font-semibold mb-2">
+                  {reports.length === 0 ? 'No Reports Yet' : 'No Reports Match Filters'}
+                </h3>
                 <p className="text-muted-foreground">
-                  {searchTerm || filterType !== 'all' || filterResult !== 'all'
-                    ? 'Try adjusting your filters or search terms'
-                    : 'Start analyzing to see your reports here'
+                  {reports.length === 0
+                    ? 'Start analyzing to see your reports here'
+                    : 'Try adjusting your filters or search terms'
                   }
                 </p>
               </div>

@@ -105,7 +105,7 @@ export const VoiceAnalysis: React.FC = () => {
       const formData = new FormData()
       formData.append('file', audioFile)
 
-      const response = await fetch('http://127.0.0.1:8000/predict', {
+      const response = await fetch('http://127.0.0.1:8001/predict', {
         method: 'POST',
         body: formData,
       })
@@ -226,7 +226,7 @@ export const VoiceAnalysis: React.FC = () => {
                   <h3 className="text-xl font-display font-semibold">
                     Prediction: <span className="text-blue-600">{result.prediction}</span>
                   </h3>
-                  <p className="text-muted-foreground">Confidence: {(result.confidence * 100).toFixed(2)}%</p>
+                  <p className="text-muted-foreground">Confidence: {(result.confidence).toFixed(2)}%</p>
                 </div>
               ) : (
                 <div className="text-center space-y-4">

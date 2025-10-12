@@ -4,6 +4,7 @@ import {
   Mic, 
   Camera, 
   PenTool, 
+  Type, 
   BarChart3,
   Brain,
   Zap,
@@ -22,30 +23,30 @@ export const HowItWorks: React.FC = () => {
     {
       step: '01',
       title: 'Data Input',
-      description: 'User provides voice recording, video, or handwriting sample',
+      description: 'User provides voice recording, video, or text sample',
       icon: Target,
-      color: 'neon-blue'
+      color: 'white-700'
     },
     {
       step: '02',
       title: 'Feature Extraction',
       description: 'AI algorithms extract relevant patterns and characteristics',
       icon: Brain,
-      color: 'neon-purple'
+      color: 'white-700'
     },
     {
       step: '03',
       title: 'Model Analysis',
       description: 'Trained models analyze features for deception indicators',
       icon: Zap,
-      color: 'neon-green'
+      color: 'white-700'
     },
     {
       step: '04',
       title: 'Result Generation',
       description: 'System provides truth/lie determination with confidence score',
       icon: BarChart3,
-      color: 'neon-pink'
+      color: 'white-700'
     }
   ]
 
@@ -65,12 +66,12 @@ export const HowItWorks: React.FC = () => {
     { name: 'Head Pose', description: 'Orientation and movement of the head' }
   ]
 
-  const handwritingFeatures = [
-    { name: 'Pressure Patterns', description: 'Force applied while writing' },
-    { name: 'Slant Analysis', description: 'Angle and consistency of letter slant' },
-    { name: 'Spacing Metrics', description: 'Letter and word spacing variations' },
-    { name: 'Stroke Dynamics', description: 'Speed and fluency of pen movements' },
-    { name: 'Baseline Deviation', description: 'Consistency of writing line alignment' }
+  const textFeatures = [
+    { name: 'Lexical Richness', description: 'Diversity and sophistication of word usage' },
+    { name: 'Sentiment Polarity', description: 'Emotional tone conveyed through the text' },
+    { name: 'Syntactic Complexity', description: 'Depth and structure of grammatical constructions' },
+    { name: 'Semantic Consistency', description: 'Logical coherence and meaning alignment across sentences' },
+    { name: 'Deceptive Linguistic Cues', description: 'Use of uncertainty, negations, or distancing language patterns' }
   ]
 
   return (
@@ -82,9 +83,9 @@ export const HowItWorks: React.FC = () => {
         className="text-center"
       >
         <h1 className="text-5xl font-bold mb-4">
-          <span className="text-neon-purple neon-text">How It Works</span>
+          <span className="text-white-900 font-bold">How It Works</span>
         </h1>
-        <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+        <p className="text-xl text-white-700 max-w-3xl mx-auto">
           Understanding the science and technology behind our AI-driven lie detection system
         </p>
       </motion.div>
@@ -95,7 +96,7 @@ export const HowItWorks: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.1 }}
       >
-        <h2 className="text-3xl font-bold mb-8 text-center text-neon-blue neon-text">
+        <h2 className="text-3xl font-bold mb-8 text-center text-white-900">
           Analysis Process
         </h2>
         <div className="grid md:grid-cols-4 gap-6">
@@ -131,7 +132,7 @@ export const HowItWorks: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.3 }}
       >
-        <h2 className="text-3xl font-bold mb-8 text-center text-neon-green neon-text">
+        <h2 className="text-3xl font-bold mb-8 text-center text-white-900">
           Analysis Methods
         </h2>
         <Tabs defaultValue="voice" className="w-full">
@@ -144,17 +145,17 @@ export const HowItWorks: React.FC = () => {
               <Camera className="h-4 w-4" />
               <span>Face Analysis</span>
             </TabsTrigger>
-            <TabsTrigger value="handwriting" className="flex items-center space-x-2">
-              <PenTool className="h-4 w-4" />
-              <span>Handwriting</span>
+            <TabsTrigger value="text" className="flex items-center space-x-2">
+              <Type className="h-4 w-4" />
+              <span>Text Analysis</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="voice">
-            <Card className="glass-morphism border-neon-blue/30">
+            <Card className="glass-morphism border-white-300/50">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Mic className="h-6 w-6 text-neon-blue" />
+                  <Mic className="h-6 w-6 text-white-800" />
                   <span>Voice Pattern Analysis</span>
                 </CardTitle>
                 <CardDescription>
@@ -164,34 +165,34 @@ export const HowItWorks: React.FC = () => {
               <CardContent>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <h4 className="font-semibold mb-4 text-neon-blue">Key Features Analyzed:</h4>
+                    <h4 className="font-semibold mb-4 text-white-900">Key Features Analyzed:</h4>
                     <div className="space-y-3">
                       {voiceFeatures.map((feature, index) => (
-                        <div key={feature.name} className="p-3 bg-neon-blue/10 rounded-lg border border-neon-blue/20">
-                          <h5 className="font-medium text-neon-blue">{feature.name}</h5>
-                          <p className="text-sm text-muted-foreground">{feature.description}</p>
+                        <div key={feature.name} className="p-3 bg-white-50 rounded-lg border border-white-200">
+                          <h5 className="font-medium text-white-900">{feature.name}</h5>
+                          <p className="text-sm text-white-600">{feature.description}</p>
                         </div>
                       ))}
                     </div>
                   </div>
                   <div className="space-y-4">
-                    <h4 className="font-semibold text-neon-blue">How It Works:</h4>
+                    <h4 className="font-semibold text-white-900">How It Works:</h4>
                     <div className="space-y-4">
                       <div className="flex items-start space-x-3">
-                        <div className="w-6 h-6 bg-neon-blue rounded-full flex items-center justify-center text-xs font-bold text-black">1</div>
-                        <p className="text-sm">Audio preprocessing and noise reduction</p>
+                        <div className="w-6 h-6 bg-white-700 rounded-full flex items-center justify-center text-xs font-bold text-white">1</div>
+                        <p className="text-sm text-white-700">Audio preprocessing and noise reduction</p>
                       </div>
                       <div className="flex items-start space-x-3">
-                        <div className="w-6 h-6 bg-neon-blue rounded-full flex items-center justify-center text-xs font-bold text-black">2</div>
-                        <p className="text-sm">Feature extraction using signal processing techniques</p>
+                        <div className="w-6 h-6 bg-white-700 rounded-full flex items-center justify-center text-xs font-bold text-white">2</div>
+                        <p className="text-sm text-white-700">Feature extraction using signal processing techniques</p>
                       </div>
                       <div className="flex items-start space-x-3">
-                        <div className="w-6 h-6 bg-neon-blue rounded-full flex items-center justify-center text-xs font-bold text-black">3</div>
-                        <p className="text-sm">Machine learning model analyzes patterns</p>
+                        <div className="w-6 h-6 bg-white-700 rounded-full flex items-center justify-center text-xs font-bold text-white">3</div>
+                        <p className="text-sm text-white-700">Machine learning model analyzes patterns</p>
                       </div>
                       <div className="flex items-start space-x-3">
-                        <div className="w-6 h-6 bg-neon-blue rounded-full flex items-center justify-center text-xs font-bold text-black">4</div>
-                        <p className="text-sm">Confidence score calculation and result generation</p>
+                        <div className="w-6 h-6 bg-white-700 rounded-full flex items-center justify-center text-xs font-bold text-white">4</div>
+                        <p className="text-sm text-white-700">Confidence score calculation and result generation</p>
                       </div>
                     </div>
                   </div>
@@ -201,10 +202,10 @@ export const HowItWorks: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="face">
-            <Card className="glass-morphism border-neon-purple/30">
+            <Card className="glass-morphism border-white-300/50">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Camera className="h-6 w-6 text-neon-purple" />
+                  <Camera className="h-6 w-6 text-white-800" />
                   <span>Facial Expression Analysis</span>
                 </CardTitle>
                 <CardDescription>
@@ -214,34 +215,34 @@ export const HowItWorks: React.FC = () => {
               <CardContent>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <h4 className="font-semibold mb-4 text-neon-purple">Key Features Analyzed:</h4>
+                    <h4 className="font-semibold mb-4 text-white-900">Key Features Analyzed:</h4>
                     <div className="space-y-3">
                       {faceFeatures.map((feature, index) => (
-                        <div key={feature.name} className="p-3 bg-neon-purple/10 rounded-lg border border-neon-purple/20">
-                          <h5 className="font-medium text-neon-purple">{feature.name}</h5>
-                          <p className="text-sm text-muted-foreground">{feature.description}</p>
+                        <div key={feature.name} className="p-3 bg-white-50 rounded-lg border border-white-200">
+                          <h5 className="font-medium text-white-900">{feature.name}</h5>
+                          <p className="text-sm text-white-600">{feature.description}</p>
                         </div>
                       ))}
                     </div>
                   </div>
                   <div className="space-y-4">
-                    <h4 className="font-semibold text-neon-purple">Detection Process:</h4>
+                    <h4 className="font-semibold text-white-900">Detection Process:</h4>
                     <div className="space-y-4">
                       <div className="flex items-start space-x-3">
-                        <div className="w-6 h-6 bg-neon-purple rounded-full flex items-center justify-center text-xs font-bold text-black">1</div>
-                        <p className="text-sm">Face detection and landmark identification</p>
+                        <div className="w-6 h-6 bg-white-700 rounded-full flex items-center justify-center text-xs font-bold text-white">1</div>
+                        <p className="text-sm text-white-700">Face detection and landmark identification</p>
                       </div>
                       <div className="flex items-start space-x-3">
-                        <div className="w-6 h-6 bg-neon-purple rounded-full flex items-center justify-center text-xs font-bold text-black">2</div>
-                        <p className="text-sm">Real-time tracking of facial movements</p>
+                        <div className="w-6 h-6 bg-white-700 rounded-full flex items-center justify-center text-xs font-bold text-white">2</div>
+                        <p className="text-sm text-white-700">Real-time tracking of facial movements</p>
                       </div>
                       <div className="flex items-start space-x-3">
-                        <div className="w-6 h-6 bg-neon-purple rounded-full flex items-center justify-center text-xs font-bold text-black">3</div>
-                        <p className="text-sm">Micro-expression detection using temporal analysis</p>
+                        <div className="w-6 h-6 bg-white-700 rounded-full flex items-center justify-center text-xs font-bold text-white">3</div>
+                        <p className="text-sm text-white-700">Micro-expression detection using temporal analysis</p>
                       </div>
                       <div className="flex items-start space-x-3">
-                        <div className="w-6 h-6 bg-neon-purple rounded-full flex items-center justify-center text-xs font-bold text-black">4</div>
-                        <p className="text-sm">Emotion classification and deception scoring</p>
+                        <div className="w-6 h-6 bg-white-700 rounded-full flex items-center justify-center text-xs font-bold text-white">4</div>
+                        <p className="text-sm text-white-700">Emotion classification and deception scoring</p>
                       </div>
                     </div>
                   </div>
@@ -250,12 +251,12 @@ export const HowItWorks: React.FC = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="handwriting">
-            <Card className="glass-morphism border-neon-green/30">
+          <TabsContent value="text">
+            <Card className="glass-morphism border-white-300/50">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <PenTool className="h-6 w-6 text-neon-green" />
-                  <span>Handwriting Pattern Analysis</span>
+                  <Type className="h-6 w-6 text-white-800" />
+                  <span>Text Pattern Analysis</span>
                 </CardTitle>
                 <CardDescription>
                   Graphological analysis combined with machine learning for deception detection
@@ -264,37 +265,38 @@ export const HowItWorks: React.FC = () => {
               <CardContent>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <h4 className="font-semibold mb-4 text-neon-green">Key Features Analyzed:</h4>
+                    <h4 className="font-semibold mb-4 text-white-900">Key Features Analyzed:</h4>
                     <div className="space-y-3">
-                      {handwritingFeatures.map((feature, index) => (
-                        <div key={feature.name} className="p-3 bg-neon-green/10 rounded-lg border border-neon-green/20">
-                          <h5 className="font-medium text-neon-green">{feature.name}</h5>
-                          <p className="text-sm text-muted-foreground">{feature.description}</p>
+                      {textFeatures.map((feature, index) => (
+                        <div key={feature.name} className="p-3 bg-white-50 rounded-lg border border-white-200">
+                          <h5 className="font-medium text-white-900">{feature.name}</h5>
+                          <p className="text-sm text-white-600">{feature.description}</p>
                         </div>
                       ))}
                     </div>
                   </div>
                   <div className="space-y-4">
-                    <h4 className="font-semibold text-neon-green">Analysis Pipeline:</h4>
-                    <div className="space-y-4">
-                      <div className="flex items-start space-x-3">
-                        <div className="w-6 h-6 bg-neon-green rounded-full flex items-center justify-center text-xs font-bold text-black">1</div>
-                        <p className="text-sm">Image preprocessing and text segmentation</p>
-                      </div>
-                      <div className="flex items-start space-x-3">
-                        <div className="w-6 h-6 bg-neon-green rounded-full flex items-center justify-center text-xs font-bold text-black">2</div>
-                        <p className="text-sm">Character and word-level feature extraction</p>
-                      </div>
-                      <div className="flex items-start space-x-3">
-                        <div className="w-6 h-6 bg-neon-green rounded-full flex items-center justify-center text-xs font-bold text-black">3</div>
-                        <p className="text-sm">Statistical analysis of writing patterns</p>
-                      </div>
-                      <div className="flex items-start space-x-3">
-                        <div className="w-6 h-6 bg-neon-green rounded-full flex items-center justify-center text-xs font-bold text-black">4</div>
-                        <p className="text-sm">Deception indicator scoring and classification</p>
-                      </div>
-                    </div>
-                  </div>
+  <h4 className="font-semibold text-white-900">Analysis Pipeline:</h4>
+  <div className="space-y-4">
+    <div className="flex items-start space-x-3">
+      <div className="w-6 h-6 bg-white-700 rounded-full flex items-center justify-center text-xs font-bold text-white">1</div>
+      <p className="text-sm text-white-700">Text preprocessing including tokenization, stopword removal, and normalization</p>
+    </div>
+    <div className="flex items-start space-x-3">
+      <div className="w-6 h-6 bg-white-700 rounded-full flex items-center justify-center text-xs font-bold text-white">2</div>
+      <p className="text-sm text-white-700">Linguistic feature extraction covering syntax, semantics, and sentiment cues</p>
+    </div>
+    <div className="flex items-start space-x-3">
+      <div className="w-6 h-6 bg-white-700 rounded-full flex items-center justify-center text-xs font-bold text-white">3</div>
+      <p className="text-sm text-white-700">Computation of deceptive linguistic indicators such as uncertainty, negations, and emotional shifts</p>
+    </div>
+    <div className="flex items-start space-x-3">
+      <div className="w-6 h-6 bg-white-700 rounded-full flex items-center justify-center text-xs font-bold text-white">4</div>
+      <p className="text-sm text-white-700">Classification using trained NLP models to predict truthfulness scores</p>
+    </div>
+  </div>
+</div>
+
                 </div>
               </CardContent>
             </Card>
@@ -308,10 +310,10 @@ export const HowItWorks: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.4 }}
       >
-        <Card className="glass-morphism border-neon-pink/30">
+        <Card className="glass-morphism border-white-300/50">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2 text-2xl">
-              <BarChart3 className="h-6 w-6 text-neon-pink" />
+              <BarChart3 className="h-6 w-6 text-white-800" />
               <span>Multi-Modal Fusion Algorithm</span>
             </CardTitle>
             <CardDescription>
@@ -321,42 +323,42 @@ export const HowItWorks: React.FC = () => {
           <CardContent>
             <div className="grid md:grid-cols-2 gap-8">
               <div>
-                <h4 className="font-semibold mb-4 text-neon-pink">Fusion Process:</h4>
+                <h4 className="font-semibold mb-4 text-white-900">Fusion Process:</h4>
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-neon-blue/20 rounded-full flex items-center justify-center">
-                      <Mic className="h-4 w-4 text-neon-blue" />
+                    <div className="w-8 h-8 bg-white-200 rounded-full flex items-center justify-center">
+                      <Mic className="h-4 w-4 text-white-700" />
                     </div>
                     <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">Voice confidence: 87%</span>
+                    <span className="text-sm">Voice confidence: 95%</span>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-neon-purple/20 rounded-full flex items-center justify-center">
-                      <Camera className="h-4 w-4 text-neon-purple" />
+                    <div className="w-8 h-8 bg-white-200 rounded-full flex items-center justify-center">
+                      <Camera className="h-4 w-4 text-white-700" />
                     </div>
                     <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">Face confidence: 73%</span>
+                    <span className="text-sm">Face confidence: 98%</span>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-neon-green/20 rounded-full flex items-center justify-center">
-                      <PenTool className="h-4 w-4 text-neon-green" />
+                    <div className="w-8 h-8 bg-white-200 rounded-full flex items-center justify-center">
+                      <Type className="h-4 w-4 text-white-700" />
                     </div>
                     <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">Handwriting confidence: 91%</span>
+                    <span className="text-sm">Text confidence: 97%</span>
                   </div>
                   <div className="border-t border-muted pt-4 mt-4">
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-neon-pink/20 rounded-full flex items-center justify-center">
-                        <BarChart3 className="h-4 w-4 text-neon-pink" />
+                      <div className="w-8 h-8 bg-white-200 rounded-full flex items-center justify-center">
+                        <BarChart3 className="h-4 w-4 text-white-700" />
                       </div>
                       <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-semibold">Final result: 84% Truth</span>
+                      <span className="text-sm font-semibold">Final result: 96% Truth</span>
                     </div>
                   </div>
                 </div>
               </div>
               <div>
-                <h4 className="font-semibold mb-4 text-neon-pink">Algorithm Features:</h4>
+                <h4 className="font-semibold mb-4 text-white-900">Algorithm Features:</h4>
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   <li>• Weighted ensemble based on individual method reliability</li>
                   <li>• Dynamic confidence adjustment based on data quality</li>

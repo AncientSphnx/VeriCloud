@@ -99,10 +99,10 @@ export const FAQ: React.FC = () => {
   ]
 
   const categories = {
-    general: { name: 'General', color: 'neon-blue' },
-    technical: { name: 'Technical', color: 'neon-purple' },
-    accuracy: { name: 'Accuracy', color: 'neon-green' },
-    privacy: { name: 'Privacy', color: 'neon-pink' }
+    general: { name: 'General', color: 'blue-600' },
+    technical: { name: 'Technical', color: 'purple-600' },
+    accuracy: { name: 'Accuracy', color: 'green-600' },
+    privacy: { name: 'Privacy', color: 'pink-600' }
   }
 
   return (
@@ -114,7 +114,7 @@ export const FAQ: React.FC = () => {
         className="text-center"
       >
         <h1 className="text-5xl font-bold mb-4">
-          <span className="text-neon-green neon-text">Frequently Asked Questions</span>
+          <span className="text-green-600">Frequently Asked Questions</span>
         </h1>
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
           Find answers to common questions about our AI-driven lie detection system
@@ -219,9 +219,9 @@ export const FAQ: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.3 }}
       >
-        <Card className="glass-morphism border-neon-blue/30 text-center">
+        <Card className="glass-morphism border-blue-600/30 text-center">
           <CardHeader>
-            <CardTitle className="text-2xl text-neon-blue">
+            <CardTitle className="text-2xl text-blue-600">
               Still Have Questions?
             </CardTitle>
             <CardDescription>
@@ -235,14 +235,14 @@ export const FAQ: React.FC = () => {
             <div className="flex justify-center space-x-4">
               <a 
                 href="/contact" 
-                className="text-neon-blue hover:text-neon-blue/80 transition-colors"
+                className="text-blue-600 hover:text-blue-600/80 transition-colors"
               >
                 Contact Support
               </a>
               <span className="text-muted-foreground">•</span>
               <a 
                 href="mailto:support@ai-lie-detection.com" 
-                className="text-neon-blue hover:text-neon-blue/80 transition-colors"
+                className="text-blue-600 hover:text-blue-600/80 transition-colors"
               >
                 Email Us
               </a>

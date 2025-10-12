@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { authAPI } from '../services/api'
 
 interface User {
   id: string
@@ -50,56 +51,69 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (username: string, email: string, password: string): Promise<boolean> => {
     setIsLoading(true)
     
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // Mock authentication - in real app, this would be an API call
-    if (username && email && password.length >= 6) {
-      const mockUser: User = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: email.split('@')[0],
-        username: username,
-        email: email,
-      }
+    try {
+      const result = await authAPI.login(email, password);
       
-      setUser(mockUser)
-      localStorage.setItem('user', JSON.stringify(mockUser))
-      setIsLoading(false)
-      return true
+      if (result.success) {
+        const userData: User = {
+          id: result.user.id,
+          name: result.user.name,
+          username: username, // Using provided username since backend doesn't store it
+          email: result.user.email,
+        };
+        
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+        localStorage.setItem('token', result.token);
+        setIsLoading(false);
+        return true;
+      } else {
+        console.error('Login failed:', result.message);
+        setIsLoading(false);
+        return false;
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setIsLoading(false);
+      return false;
     }
-    
-    setIsLoading(false)
-    return false
   }
 
   const signup = async (name: string, username: string, email: string, password: string): Promise<boolean> => {
     setIsLoading(true)
     
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // Mock registration - in real app, this would be an API call
-    if (name && username && email && password.length >= 6) {
-      const mockUser: User = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: name,
-        username: username,
-        email: email,
-      }
+    try {
+      const result = await authAPI.register(name, email, password);
       
-      setUser(mockUser)
-      localStorage.setItem('user', JSON.stringify(mockUser))
-      setIsLoading(false)
-      return true
+      if (result.success) {
+        const userData: User = {
+          id: result.user.id,
+          name: result.user.name,
+          username: username, // Using provided username since backend doesn't store it
+          email: result.user.email,
+        };
+        
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+        localStorage.setItem('token', result.token);
+        setIsLoading(false);
+        return true;
+      } else {
+        console.error('Signup failed:', result.message);
+        setIsLoading(false);
+        return false;
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      setIsLoading(false);
+      return false;
     }
-    
-    setIsLoading(false)
-    return false
   }
 
   const logout = () => {
     setUser(null)
     localStorage.removeItem('user')
+    localStorage.removeItem('token')
   }
 
   const value: AuthContextType = {

@@ -53,28 +53,28 @@ export const Contact: React.FC = () => {
       title: 'Email',
       value: 'support@ai-lie-detection.com',
       description: 'Send us an email anytime',
-      color: 'neon-blue'
+      color: 'blue-600'
     },
     {
       icon: Phone,
       title: 'Phone',
       value: '+1 (555) 123-4567',
       description: 'Mon-Fri from 8am to 6pm',
-      color: 'neon-purple'
+      color: 'purple-600'
     },
     {
       icon: MapPin,
       title: 'Office',
       value: 'San Francisco, CA',
       description: 'Silicon Valley Tech Hub',
-      color: 'neon-green'
+      color: 'green-600'
     },
     {
       icon: MessageSquare,
       title: 'Live Chat',
       value: 'Available 24/7',
       description: 'Instant support online',
-      color: 'neon-pink'
+      color: 'pink-600'
     }
   ]
 
@@ -94,7 +94,7 @@ export const Contact: React.FC = () => {
         className="text-center"
       >
         <h1 className="text-5xl font-bold mb-4">
-          <span className="text-neon-blue neon-text">Get In Touch</span>
+          <span className="text-blue-600">Get In Touch</span>
         </h1>
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
           Have questions about our AI lie detection system? We'd love to hear from you. 
@@ -109,10 +109,10 @@ export const Contact: React.FC = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
         >
-          <Card className="glass-morphism border-neon-blue/30">
+          <Card className="glass-morphism border-blue-600/30">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Send className="h-6 w-6 text-neon-blue" />
+                <Send className="h-6 w-6 text-blue-600" />
                 <span>Send us a Message</span>
               </CardTitle>
               <CardDescription>
@@ -126,10 +126,10 @@ export const Contact: React.FC = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   className="text-center py-8"
                 >
-                  <div className="w-16 h-16 bg-neon-green/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Send className="h-8 w-8 text-neon-green" />
+                  <div className="w-16 h-16 bg-green-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Send className="h-8 w-8 text-green-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-neon-green mb-2">
+                  <h3 className="text-xl font-semibold text-green-600 mb-2">
                     Message Sent!
                   </h3>
                   <p className="text-muted-foreground">
@@ -222,7 +222,7 @@ export const Contact: React.FC = () => {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="space-y-6"
         >
-          <h2 className="text-2xl font-semibold text-neon-purple neon-text mb-6">
+          <h2 className="text-2xl font-semibold text-purple-600 mb-6">
             Contact Information
           </h2>
           
@@ -293,15 +293,15 @@ export const Contact: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.8 }}
           >
-            <Card className="glass-morphism border-neon-green/30">
+            <Card className="glass-morphism border-green-600/30">
               <CardHeader>
-                <CardTitle className="text-neon-green">Quick Support</CardTitle>
+                <CardTitle className="text-green-600">Quick Support</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Response Time:</span>
-                    <span className="text-neon-green">&lt; 24 hours</span>
+                    <span className="text-green-600">&lt; 24 hours</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Support Hours:</span>
@@ -325,7 +325,7 @@ export const Contact: React.FC = () => {
         transition={{ duration: 0.6, delay: 0.9 }}
         className="text-center"
       >
-        <Card className="glass-morphism border-neon-purple/30">
+        <Card className="glass-morphism border-purple-600/30">
           <CardContent className="p-8">
             <h3 className="text-xl font-semibold mb-2">
               Looking for Quick Answers?

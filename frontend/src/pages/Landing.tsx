@@ -30,10 +30,10 @@ export const Landing: React.FC = () => {
   ]
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-slate-950 text-slate-50">
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-neon-blue/10 via-neon-purple/10 to-neon-green/10" />
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900/50 via-slate-800/30 to-slate-900/50" />
         <div className="relative container mx-auto px-6 py-20">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -47,20 +47,20 @@ export const Landing: React.FC = () => {
               className="w-full h-auto object-contain" 
             />
             
-            <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+            <p className="text-xl md:text-2xl text-slate-300 mb-8 max-w-2xl mx-auto">
               Advanced truth analysis using cutting-edge AI technology. 
               Analyze voice patterns, facial expressions, and Text to detect deception with unprecedented accuracy.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/signup">
-                <Button variant="brand" size="lg" className="text-lg px-8 py-3">
+                <Button variant="brand" size="lg" className="text-lg px-8 py-3 text-white">
                   Get Started
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
               <Link to="/login">
-                <Button variant="outline" size="lg" className="text-lg px-8 py-3">
+                <Button variant="outline" size="lg" className="text-lg px-8 py-3 border-slate-500/60 text-black hover:bg-slate-800/80 hover:text-slate-100 hover:border-slate-400 transition-all duration-300">
                   Login
                 </Button>
               </Link>
@@ -69,13 +69,13 @@ export const Landing: React.FC = () => {
         </div>
         
         {/* Animated Background Elements */}
-        <div className="absolute top-20 left-10 w-20 h-20 bg-neon-blue/20 rounded-full animate-glow" />
-        <div className="absolute top-40 right-20 w-16 h-16 bg-neon-purple/20 rounded-full animate-glow" style={{ animationDelay: '1s' }} />
-        <div className="absolute bottom-20 left-1/4 w-12 h-12 bg-neon-green/20 rounded-full animate-glow" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-20 left-10 w-20 h-20 bg-slate-700/40 rounded-full animate-glow" />
+        <div className="absolute top-40 right-20 w-16 h-16 bg-slate-700/40 rounded-full animate-glow" style={{ animationDelay: '1s' }} />
+        <div className="absolute bottom-20 left-1/4 w-12 h-12 bg-slate-700/40 rounded-full animate-glow" style={{ animationDelay: '2s' }} />
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-card/50">
+      <section className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -84,10 +84,10 @@ export const Landing: React.FC = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold mb-4 text-neon-blue neon-text">
+            <h2 className="text-4xl font-bold mb-4 text-slate-50">
               How It Works
             </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-xl text-slate-300 max-w-2xl mx-auto">
               Our system analyzes multiple behavioral and physiological indicators 
               to provide comprehensive lie detection capabilities.
             </p>
@@ -102,13 +102,13 @@ export const Landing: React.FC = () => {
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 viewport={{ once: true }}
               >
-                <Card className="glass-morphism border-neon-blue/30 hover:border-neon-blue/60 transition-all duration-300">
+                <Card className="glass-morphism border-slate-600/60 hover:border-slate-500/80 transition-all duration-300">
                   <CardHeader className="text-center">
-                    <feature.icon className="h-12 w-12 text-neon-blue mx-auto mb-4" />
-                    <CardTitle className="text-xl">{feature.title}</CardTitle>
+                    <feature.icon className="h-12 w-12 text-cyan-400 mx-auto mb-4" />
+                    <CardTitle className="text-xl text-slate-100">{feature.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <CardDescription className="text-center">
+                    <CardDescription className="text-center text-slate-200">
                       {feature.description}
                     </CardDescription>
                   </CardContent>
@@ -129,10 +129,10 @@ export const Landing: React.FC = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold mb-4 text-neon-purple neon-text">
+            <h2 className="text-4xl font-bold mb-4 text-slate-50">
               Analysis Process
             </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-xl text-slate-300 max-w-2xl mx-auto">
               Simple three-step process to get accurate lie detection results
             </p>
           </motion.div>
@@ -151,9 +151,9 @@ export const Landing: React.FC = () => {
                 viewport={{ once: true }}
                 className="text-center"
               >
-                <div className="text-6xl font-bold text-neon-green/30 mb-4">{item.step}</div>
-                <h3 className="text-2xl font-semibold mb-2 text-neon-green">{item.title}</h3>
-                <p className="text-muted-foreground">{item.desc}</p>
+                <div className="text-6xl font-bold text-slate-500/50 mb-4">{item.step}</div>
+                <h3 className="text-2xl font-semibold mb-2 text-slate-200">{item.title}</h3>
+                <p className="text-slate-400">{item.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -161,19 +161,18 @@ export const Landing: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-neon-blue/10 to-neon-purple/10">
+      <section className="py-20 bg-gradient-to-r from-slate-950/80 to-slate-900/80">
         <div className="container mx-auto px-6 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
           >
-            <h2 className="text-4xl font-bold mb-4 text-neon-blue neon-text">
+            <h2 className="text-4xl font-bold mb-4 text-slate-50">
               Ready to Get Started?
             </h2>
             <Link to="/signup">
-              <Button variant="brand" size="lg" className="text-lg px-8 py-3">
+              <Button variant="brand" size="lg" className="text-lg px-8 py-3 text-white">
                 Sign Up
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>

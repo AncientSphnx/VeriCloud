@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import tempfile, os
 from predictor import predict
 
-MODEL_PATH = r"C:\Users\91829\OneDrive\Desktop\Lie Detector (MAIN)\Voice model\src\models\model_final2.pth"  # adjust path if needed
+MODEL_PATH = r"C:\Users\91829\OneDrive\Desktop\VeriCloud\Voice model\src\models\model_final2.pth"  # adjust path if needed
 
 app = FastAPI()
 
