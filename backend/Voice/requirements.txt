@@ -2,7 +2,6 @@ fastapi
 uvicorn[standard]
 python-multipart
 moviepy>=2.2.1
-
 librosa
 soundfile
 torch
