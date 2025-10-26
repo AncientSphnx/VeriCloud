@@ -4,6 +4,8 @@ import torch.nn as nn
 import numpy as np
 import librosa
 import os
+import boto3
+import tempfile
 from moviepy.editor import VideoFileClip
 from pydub import AudioSegment
 
@@ -29,9 +31,54 @@ class BiLSTM_Attention(nn.Module):
         return out
 
 # -----------------------------
-# 2. Load Model
+# 2. Download Model from S3
 # -----------------------------
-def load_model(model_path: str) -> nn.Module:
+def download_model_from_s3(bucket, s3_model_key):
+    """
+    Downloads model from AWS S3 to a temporary directory.
+    Returns local file path.
+    """
+    s3 = boto3.client(
+        's3',
+        aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+        aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+        region_name=os.getenv('AWS_REGION')
+    )
+
+    tmp_dir = tempfile.mkdtemp()
+    local_model_path = os.path.join(tmp_dir, os.path.basename(s3_model_key))
+
+    print(f"Downloading voice model from s3://{bucket}/{s3_model_key}")
+    s3.download_file(bucket, s3_model_key, local_model_path)
+
+    return local_model_path
+
+
+# -----------------------------
+# 3. Load Model
+# -----------------------------
+def load_model(model_path: str = None) -> nn.Module:
+    """
+    Load the BiLSTM model from S3 or local path.
+    If model_path is None, attempts to load from S3 with local fallback.
+    """
+    if model_path is None:
+        # Try to load from S3
+        try:
+            bucket = os.getenv("AWS_S3_BUCKET")
+            s3_model_key = os.getenv("VOICE_MODEL_KEY", "models/voice/v1/bilstm_attention_model.pt")
+            model_path = download_model_from_s3(bucket, s3_model_key)
+            print("✅ Voice model loaded successfully from S3.")
+        except Exception as e:
+            print(f"⚠️ Failed to load model from S3: {e}")
+            # Fallback to local
+            local_model_path = os.path.join(os.path.dirname(__file__), 'bilstm_attention_model.pt')
+            if os.path.exists(local_model_path):
+                print("Using local voice model as fallback.")
+                model_path = local_model_path
+            else:
+                raise RuntimeError("❌ Voice model not found locally or in S3.")
+    
     model = BiLSTM_Attention()
     state = torch.load(model_path, map_location="cpu")
     model.load_state_dict(state, strict=False)
@@ -39,7 +86,7 @@ def load_model(model_path: str) -> nn.Module:
     return model
 
 # -----------------------------
-# 3. Handle Any File Type → WAV
+# 4. Handle Any File Type → WAV
 # -----------------------------
 def convert_to_wav(input_path: str) -> str:
     ext = os.path.splitext(input_path)[1].lower()
@@ -61,7 +108,7 @@ def convert_to_wav(input_path: str) -> str:
     raise ValueError(f"Unsupported file format: {ext}")
 
 # -----------------------------
-# 4. Audio → Feature Extraction (MFCC + Δ + ΔΔ = 39 features)
+# 5. Audio → Feature Extraction (MFCC + Δ + ΔΔ = 39 features)
 # -----------------------------
 def extract_features(file_path: str, n_mfcc: int = 13) -> np.ndarray:
     y, sr = librosa.load(file_path, sr=16000)
@@ -82,13 +129,13 @@ def extract_features(file_path: str, n_mfcc: int = 13) -> np.ndarray:
     return combined.T
 
 # -----------------------------
-# 5. Prediction Function
+# 6. Prediction Function
 # -----------------------------
-def predict(file_path: str, model_path: str, threshold: float = 0.5):
+def predict(file_path: str, model_path: str = None, threshold: float = 0.5):
     # Convert to wav if needed
     wav_path = convert_to_wav(file_path)
 
-    # Load model
+    # Load model (from S3 or local)
     model = load_model(model_path)
 
     # Extract features

@@ -2,6 +2,8 @@ import os
 import sys
 import joblib
 import pandas as pd
+import boto3
+import tempfile
 
 # Add the Text model directory to the path
 text_model_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'Text model'))
@@ -12,32 +14,85 @@ from preprocess import TextPreprocessor, extract_linguistic_features
 import scipy.sparse as sp
 import numpy as np
 
+
+# ----------------------------
+# Download Model from S3
+# ----------------------------
+def download_model_from_s3(bucket, s3_model_key, s3_vectorizer_key):
+    """
+    Downloads model and vectorizer from AWS S3 to a temporary directory.
+    Returns local file paths.
+    """
+    s3 = boto3.client(
+        's3',
+        aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+        aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+        region_name=os.getenv('AWS_REGION')
+    )
+
+    tmp_dir = tempfile.mkdtemp()
+
+    local_model_path = os.path.join(tmp_dir, os.path.basename(s3_model_key))
+    local_vectorizer_path = os.path.join(tmp_dir, os.path.basename(s3_vectorizer_key))
+
+    print(f"Downloading text model from s3://{bucket}/{s3_model_key}")
+    s3.download_file(bucket, s3_model_key, local_model_path)
+
+    print(f"Downloading vectorizer from s3://{bucket}/{s3_vectorizer_key}")
+    s3.download_file(bucket, s3_vectorizer_key, local_vectorizer_path)
+
+    return local_model_path, local_vectorizer_path
+
+
 def load_model(model_name='logistic_regression'):
     """
-    Load the trained deception detection model and its vectorizer.
+    Load the trained deception detection model and its vectorizer from S3 or local.
     """
-    # Path to models directory in Text model folder
-    model_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'Text model', 'models'))
-    model_files = [f for f in os.listdir(model_dir) if f.startswith(model_name) and f.endswith('.pkl')]
+    model = None
+    vectorizer = None
     
-    if not model_files:
-        raise FileNotFoundError(f"No {model_name} model found in {model_dir}")
-    
-    # Get the most recent model file
-    latest_model = sorted(model_files)[-1]
-    model_path = os.path.join(model_dir, latest_model)
-    print(f"Loading model: {model_path}")
-    model = joblib.load(model_path)
-    
-    # Load vectorizer if available
-    vectorizer_path = os.path.join(model_dir, 'vectorizer.pkl')
-    if os.path.exists(vectorizer_path):
+    # Try to load from S3 first
+    try:
+        bucket = os.getenv("AWS_S3_BUCKET")
+        s3_model_key = os.getenv("TEXT_MODEL_KEY", "models/text/v1/logistic_regression.pkl")
+        s3_vectorizer_key = os.getenv("TEXT_VECTORIZER_KEY", "models/text/v1/vectorizer.pkl")
+        
+        model_path, vectorizer_path = download_model_from_s3(bucket, s3_model_key, s3_vectorizer_key)
+        print("✅ Text model and vectorizer loaded successfully from S3.")
+        
+        model = joblib.load(model_path)
         vectorizer = joblib.load(vectorizer_path)
-    else:
-        print("⚠️ Vectorizer not found. Using dummy features.")
-        vectorizer = None
+        return model, vectorizer
+        
+    except Exception as e:
+        print(f"⚠️ Failed to load model from S3: {e}")
     
-    return model, vectorizer
+    # Fallback to local
+    try:
+        model_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'Text model', 'models'))
+        model_files = [f for f in os.listdir(model_dir) if f.startswith(model_name) and f.endswith('.pkl')]
+        
+        if not model_files:
+            raise FileNotFoundError(f"No {model_name} model found in {model_dir}")
+        
+        # Get the most recent model file
+        latest_model = sorted(model_files)[-1]
+        model_path = os.path.join(model_dir, latest_model)
+        print(f"Using local model: {model_path}")
+        model = joblib.load(model_path)
+        
+        # Load vectorizer if available
+        vectorizer_path = os.path.join(model_dir, 'vectorizer.pkl')
+        if os.path.exists(vectorizer_path):
+            vectorizer = joblib.load(vectorizer_path)
+        else:
+            print("⚠️ Vectorizer not found. Using dummy features.")
+            vectorizer = None
+        
+        return model, vectorizer
+        
+    except Exception as e:
+        raise RuntimeError(f"❌ Text model not found locally or in S3: {e}")
 
 
 def prepare_text(text, vectorizer=None):
