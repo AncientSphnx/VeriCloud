@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import requests
 import tempfile
 import os
+import boto3
 from typing import Optional
 
 app = FastAPI()
@@ -20,6 +21,37 @@ app.add_middleware(
 TEXT_API = "http://127.0.0.1:8000/predict_text"
 VOICE_API = "http://127.0.0.1:8001/predict"
 FACE_API = "http://127.0.0.1:8002/predict"
+
+# ----------------------------
+# S3 Configuration
+# ----------------------------
+def get_s3_client():
+    """Get an S3 client with configured credentials"""
+    return boto3.client(
+        's3',
+        aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+        aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+        region_name=os.getenv('AWS_REGION', 'us-east-1')
+    )
+
+
+def download_from_s3(bucket, s3_key):
+    """
+    Download a file from S3 to a temporary location.
+    Returns the local file path.
+    """
+    try:
+        s3_client = get_s3_client()
+        tmp_dir = tempfile.mkdtemp()
+        local_path = os.path.join(tmp_dir, os.path.basename(s3_key))
+        
+        print(f"Downloading from s3://{bucket}/{s3_key}")
+        s3_client.download_file(bucket, s3_key, local_path)
+        
+        return local_path
+    except Exception as e:
+        print(f"⚠️ Failed to download from S3: {e}")
+        raise
 
 def weighted_fusion(text_result, voice_result, face_result=None):
     """
