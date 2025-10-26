@@ -6,4 +6,4 @@ librosa
 soundfile
 torch
 numpy
-botot3
+boto3
