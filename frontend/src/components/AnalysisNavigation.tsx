@@ -69,27 +69,32 @@ export const AnalysisNavigation: React.FC = () => {
               
               return (
                 <Link key={item.path} to={item.path}>
-                  <Button
-                    variant={isActive ? "brand" : "outline"}
-                    className={`w-full h-auto p-4 flex flex-col items-center gap-2 transition-all duration-200 ${
-                      isActive 
-                        ? 'bg-blue-600 text-white border-blue-600' 
-                        : 'hover:bg-blue-50 hover:border-blue-300'
-                    }`}
-                  >
-                    <Icon className={`h-6 w-6 ${isActive ? 'text-white' : 'text-blue-600'}`} />
-                    <div className="text-center">
-                      <div className={`font-medium ${isActive ? 'text-white' : 'text-foreground'}`}>
-                        {item.label}
+                  <div className={`group p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer ${
+                    isActive
+                      ? 'bg-blue-600 border-blue-600'
+                      : 'border-input hover:bg-blue-600 hover:border-blue-600'
+                  }`}>
+                    <div className="flex flex-col items-center gap-2">
+                      <Icon className={`h-6 w-6 transition-colors ${
+                        isActive ? 'text-white' : 'text-blue-600'
+                      } group-hover:text-yellow-300`} />
+                      <div className="text-center">
+                        <div className={`font-medium text-sm ${
+                          isActive ? 'text-white' : 'text-foreground group-hover:text-white hover:text-white'
+                        }`}>
+                          {item.label}
+                        </div>
+                        <div className={`text-xs ${
+                          isActive ? 'text-blue-100' : 'text-muted-foreground group-hover:text-blue-100 hover:text-blue-100'
+                        }`}>
+                          {item.description}
+                        </div>
                       </div>
-                      <div className={`text-xs ${isActive ? 'text-blue-100' : 'text-muted-foreground'}`}>
-                        {item.description}
-                      </div>
+                      {isActive && (
+                        <ChevronRight className="h-4 w-4 text-white" />
+                      )}
                     </div>
-                    {isActive && (
-                      <ChevronRight className="h-4 w-4 text-white" />
-                    )}
-                  </Button>
+                  </div>
                 </Link>
               )
             })}

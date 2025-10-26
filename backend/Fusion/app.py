@@ -19,6 +19,7 @@ app.add_middleware(
 # Backend endpoints
 TEXT_API = "http://127.0.0.1:8000/predict_text"
 VOICE_API = "http://127.0.0.1:8001/predict"
+FACE_API = "http://127.0.0.1:8002/predict"
 
 def weighted_fusion(text_result, voice_result, face_result=None):
     """
@@ -127,10 +128,11 @@ def weighted_fusion(text_result, voice_result, face_result=None):
 @app.post("/predict_fusion")
 async def predict_fusion(
     text: str = Form(...),
-    audio_file: Optional[UploadFile] = File(None)
+    audio_file: Optional[UploadFile] = File(None),
+    video_file: Optional[UploadFile] = File(None)
 ):
     """
-    Fusion endpoint that combines text and voice predictions
+    Fusion endpoint that combines text, voice, and face predictions
     """
     results = {}
     errors = {}
@@ -170,17 +172,52 @@ async def predict_fusion(
         errors["voice"] = "No audio file provided"
         results["voice"] = {"prediction": "Unknown", "confidence": 0.0}
     
-    # 3. Apply Fusion Algorithm
-    if results["text"]["prediction"] != "Unknown" and results["voice"]["prediction"] != "Unknown":
-        fusion_result = weighted_fusion(results["text"], results["voice"])
+    # 3. Face Analysis
+    if video_file:
+        try:
+            # Save video file temporarily
+            with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(video_file.filename)[1]) as tmp:
+                content = await video_file.read()
+                tmp.write(content)
+                tmp_path = tmp.name
+            
+            # Call face API
+            with open(tmp_path, 'rb') as f:
+                files = {'file': (video_file.filename, f, video_file.content_type)}
+                face_response = requests.post(FACE_API, files=files)
+                face_response.raise_for_status()
+                results["face"] = face_response.json()
+            
+            # Clean up
+            os.remove(tmp_path)
+        except Exception as e:
+            errors["face"] = str(e)
+            results["face"] = {"prediction": "Unknown", "confidence": 0.0}
     else:
-        # Fallback if one or both models failed
+        errors["face"] = "No video file provided"
+        results["face"] = {"prediction": "Unknown", "confidence": 0.0}
+    
+    # 4. Apply Fusion Algorithm
+    # Check if we have at least text and voice
+    text_valid = results["text"]["prediction"] != "Unknown"
+    voice_valid = results["voice"]["prediction"] != "Unknown"
+    face_valid = results["face"]["prediction"] != "Unknown"
+    
+    if text_valid and voice_valid:
+        if face_valid:
+            # All three models available
+            fusion_result = weighted_fusion(results["text"], results["voice"], results["face"])
+        else:
+            # Only text and voice
+            fusion_result = weighted_fusion(results["text"], results["voice"])
+    else:
+        # Fallback if text or voice failed
         fusion_result = {
             "final_prediction": "Error",
             "final_confidence": 0.0,
             "final_score": 0.0,
             "breakdown": results,
-            "reasoning": "One or more models failed to provide predictions.",
+            "reasoning": "Text and Voice models are required for fusion. One or both failed to provide predictions.",
             "weights_used": {}
         }
     
@@ -197,5 +234,6 @@ async def health_check():
     return {
         "status": "healthy",
         "text_api": TEXT_API,
-        "voice_api": VOICE_API
+        "voice_api": VOICE_API,
+        "face_api": FACE_API
     }

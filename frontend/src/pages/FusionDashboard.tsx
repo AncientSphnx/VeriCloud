@@ -13,7 +13,8 @@ import {
   Type,
   Upload,
   FileAudio,
-  AlertCircle
+  AlertCircle,
+  Camera
 } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
@@ -49,6 +50,12 @@ interface FusionResult {
       weight: number
       contribution: number
     }
+    face?: {
+      prediction: string
+      confidence: number
+      weight: number
+      contribution: number
+    }
   }
   reasoning: string
   weights_used: Record<string, number>
@@ -60,6 +67,7 @@ export const FusionDashboard: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [textInput, setTextInput] = useState<string>('')
   const [audioFile, setAudioFile] = useState<File | null>(null)
+  const [videoFile, setVideoFile] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const runFusionAnalysis = async () => {
@@ -76,8 +84,11 @@ export const FusionDashboard: React.FC = () => {
       const formData = new FormData()
       formData.append('text', textInput)
       formData.append('audio_file', audioFile)
+      if (videoFile) {
+        formData.append('video_file', videoFile)
+      }
       
-      const response = await fetch('http://127.0.0.1:8002/predict_fusion', {
+      const response = await fetch('http://127.0.0.1:8003/predict_fusion', {
         method: 'POST',
         body: formData,
       })
@@ -99,6 +110,7 @@ export const FusionDashboard: React.FC = () => {
   const clearAll = () => {
     setTextInput('')
     setAudioFile(null)
+    setVideoFile(null)
     setFusionResult(null)
     setError(null)
   }
@@ -116,7 +128,13 @@ export const FusionDashboard: React.FC = () => {
       confidence: fusionResult.breakdown.voice.confidence * 100,
       prediction: fusionResult.breakdown.voice.prediction,
       fill: '#8b5cf6'
-    }
+    },
+    ...(fusionResult.breakdown.face ? [{
+      method: 'Face',
+      confidence: fusionResult.breakdown.face.confidence * 100,
+      prediction: fusionResult.breakdown.face.prediction,
+      fill: '#ec4899'
+    }] : [])
   ] : []
 
   const methodDistribution = fusionResult ? [
@@ -129,7 +147,12 @@ export const FusionDashboard: React.FC = () => {
       name: 'Voice Analysis', 
       value: fusionResult.weights_used.voice * 100, 
       fill: '#8b5cf6' 
-    }
+    },
+    ...(fusionResult.weights_used.face ? [{
+      name: 'Face Analysis',
+      value: fusionResult.weights_used.face * 100,
+      fill: '#ec4899'
+    }] : [])
   ] : []
 
   return (
@@ -152,7 +175,7 @@ export const FusionDashboard: React.FC = () => {
       </motion.div>
 
       {/* Input Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Text Input */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -238,6 +261,57 @@ export const FusionDashboard: React.FC = () => {
             </CardContent>
           </Card>
         </motion.div>
+
+        {/* Video Input */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
+          <Card className="shadow-elegant-lg bg-card/50 backdrop-blur-sm border-pink-600/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Camera className="h-5 w-5 text-pink-600" />
+                Video Input
+              </CardTitle>
+              <CardDescription>
+                Upload a video file for face analysis
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="videoFile">Video File</Label>
+                <div className="flex flex-col items-center justify-center border-2 border-dashed border-muted rounded-lg p-8 hover:border-primary/50 transition-colors">
+                  <input
+                    id="videoFile"
+                    type="file"
+                    accept="video/*"
+                    onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
+                    className="hidden"
+                    disabled={isAnalyzing}
+                  />
+                  <label htmlFor="videoFile" className="cursor-pointer text-center">
+                    {videoFile ? (
+                      <>
+                        <Camera className="h-12 w-12 text-pink-600 mx-auto mb-2" />
+                        <p className="text-sm font-medium">{videoFile.name}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {(videoFile.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-sm text-muted-foreground">Click to upload video</p>
+                        <p className="text-xs text-muted-foreground mt-1">MP4, WebM, or other video formats</p>
+                      </>
+                    )}
+                  </label>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
 
       {/* Run Analysis Button */}
@@ -267,7 +341,7 @@ export const FusionDashboard: React.FC = () => {
           )}
         </Button>
         
-        {(textInput || audioFile) && (
+        {(textInput || audioFile || videoFile) && (
           <Button
             onClick={clearAll}
             variant="outline"
@@ -346,7 +420,7 @@ export const FusionDashboard: React.FC = () => {
                     {fusionResult.reasoning}
                   </p>
                 </div>
-                <div className="grid grid-cols-2 gap-4 pt-2">
+                <div className="grid grid-cols-3 gap-4 pt-2">
                   <div className="text-center">
                     <p className="text-sm text-muted-foreground">Weighted Score</p>
                     <p className="text-2xl font-bold text-blue-600">
@@ -355,7 +429,13 @@ export const FusionDashboard: React.FC = () => {
                   </div>
                   <div className="text-center">
                     <p className="text-sm text-muted-foreground">Models Combined</p>
-                    <p className="text-2xl font-bold text-purple-600">2</p>
+                    <p className="text-2xl font-bold text-purple-600">{Object.keys(fusionResult.breakdown).length}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">Confidence</p>
+                    <p className="text-2xl font-bold text-pink-600">
+                      {(fusionResult.final_confidence * 100).toFixed(1)}%
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -445,6 +525,82 @@ export const FusionDashboard: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Voice Analysis Result */}
+              <Card className="shadow-elegant-lg bg-card/50 backdrop-blur-sm border-purple-600/30">
+                <CardHeader className="text-center">
+                  <Mic className="h-8 w-8 text-purple-600 mx-auto mb-2" />
+                  <CardTitle>Voice Analysis</CardTitle>
+                  <CardDescription className={`text-lg font-semibold ${
+                    fusionResult.breakdown.voice.prediction === 'Truthful' ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {fusionResult.breakdown.voice.prediction}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-purple-600 mb-2">
+                      {(fusionResult.breakdown.voice.confidence * 100).toFixed(1)}%
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-2">Model Confidence</p>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div
+                        className="bg-purple-600 h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${fusionResult.breakdown.voice.confidence * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                  <div className="pt-3 border-t space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Weight:</span>
+                      <span className="font-medium">{(fusionResult.breakdown.voice.weight * 100).toFixed(0)}%</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Contribution:</span>
+                      <span className="font-medium">{(fusionResult.breakdown.voice.contribution * 100).toFixed(1)}%</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Face Analysis Result (if available) */}
+              {fusionResult.breakdown.face && (
+                <Card className="shadow-elegant-lg bg-card/50 backdrop-blur-sm border-pink-600/30">
+                  <CardHeader className="text-center">
+                    <Camera className="h-8 w-8 text-pink-600 mx-auto mb-2" />
+                    <CardTitle>Face Analysis</CardTitle>
+                    <CardDescription className={`text-lg font-semibold ${
+                      fusionResult.breakdown.face.prediction === 'Truthful' ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {fusionResult.breakdown.face.prediction}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-pink-600 mb-2">
+                        {(fusionResult.breakdown.face.confidence * 100).toFixed(1)}%
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-2">Model Confidence</p>
+                      <div className="w-full bg-muted rounded-full h-2">
+                        <div
+                          className="bg-pink-600 h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${fusionResult.breakdown.face.confidence * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div className="pt-3 border-t space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Weight:</span>
+                        <span className="font-medium">{(fusionResult.breakdown.face.weight * 100).toFixed(0)}%</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Contribution:</span>
+                        <span className="font-medium">{(fusionResult.breakdown.face.contribution * 100).toFixed(1)}%</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </motion.div>
 

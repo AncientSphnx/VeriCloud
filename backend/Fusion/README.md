@@ -1,6 +1,6 @@
 # Fusion Backend
 
-This backend combines predictions from Text and Voice models using a weighted ensemble approach.
+This backend combines predictions from Text, Voice, and Face models using a weighted ensemble approach.
 
 ## Setup
 
@@ -17,11 +17,11 @@ pip install fastapi uvicorn requests
 
 ## Running the Server
 
-Start the fusion backend on port 8002:
+Start the fusion backend on port 8003:
 
 ```bash
-cd "C:\Users\91829\OneDrive\Desktop\Lie Detector (MAIN)\backend\Fusion"
-uvicorn app:app --reload --port 8002
+cd backend/Fusion
+uvicorn app:app --reload --port 8003
 ```
 
 ## Required Services
@@ -30,25 +30,32 @@ The fusion backend depends on these services running:
 
 1. **Text Backend** - Port 8000
    ```bash
-   cd "../Text"
+   cd backend/Text
    uvicorn app:app --reload --port 8000
    ```
 
 2. **Voice Backend** - Port 8001
    ```bash
-   cd "../Voice"
+   cd backend/Voice
    uvicorn app:app --reload --port 8001
+   ```
+
+3. **Face Backend** - Port 8002
+   ```bash
+   cd backend/Face
+   uvicorn app:app --reload --port 8002
    ```
 
 ## API Endpoints
 
 ### POST /predict_fusion
 
-Combines text and voice analysis for a final prediction.
+Combines text, voice, and face analysis for a final prediction.
 
 **Request:**
 - `text` (form-data): The text statement to analyze
-- `audio_file` (file): Audio file for voice analysis
+- `audio_file` (file): Audio file for voice analysis (optional)
+- `video_file` (file): Video file for face analysis (optional)
 
 **Response:**
 ```json
@@ -60,20 +67,27 @@ Combines text and voice analysis for a final prediction.
     "text": {
       "prediction": "Truthful",
       "confidence": 0.42,
-      "weight": 0.5,
-      "contribution": 0.29
+      "weight": 0.4,
+      "contribution": 0.168
     },
     "voice": {
       "prediction": "Deceptive",
       "confidence": 0.85,
-      "weight": 0.5,
-      "contribution": 0.425
+      "weight": 0.4,
+      "contribution": 0.34
+    },
+    "face": {
+      "prediction": "Deceptive",
+      "confidence": 0.78,
+      "weight": 0.2,
+      "contribution": 0.156
     }
   },
-  "reasoning": "Voice model shows strongest signal (85.0% confidence) influencing final decision.",
+  "reasoning": "All models agree on deceptive prediction with high confidence.",
   "weights_used": {
-    "text": 0.5,
-    "voice": 0.5
+    "text": 0.4,
+    "voice": 0.4,
+    "face": 0.2
   }
 }
 ```
@@ -87,24 +101,25 @@ Health check endpoint.
 {
   "status": "healthy",
   "text_api": "http://127.0.0.1:8000/predict_text",
-  "voice_api": "http://127.0.0.1:8001/predict"
+  "voice_api": "http://127.0.0.1:8001/predict",
+  "face_api": "http://127.0.0.1:8002/predict"
 }
 ```
 
 ## Fusion Algorithm
 
 The weighted ensemble uses these default weights:
-- Text: 50%
-- Voice: 50%
+- **Text: 40%** (linguistic patterns and content analysis)
+- **Voice: 40%** (vocal stress, pitch, and speech patterns)
+- **Face: 20%** (facial expressions, micro-expressions, and behavioral patterns)
+
+When face data is not provided:
+- Text: 50%, Voice: 50%
 
 The algorithm:
-1. Converts each model's prediction to a deception score (0-1)
-2. Calculates weighted average
-3. Applies 0.5 threshold for final decision
-4. Provides reasoning based on model agreement and confidence levels
-
-## Future Enhancements
-
-When face recognition is added:
-- Weights will be redistributed: Text 40%, Voice 40%, Face 20%
-- Update the `weighted_fusion()` function to include face results
+1. Normalizes predictions to standard format (Truthful/Deceptive)
+2. Converts each model's prediction to a deception score (0-1)
+3. Calculates weighted average of all available models
+4. Applies 0.5 threshold for final decision
+5. Provides reasoning based on model agreement and confidence levels
+6. Returns detailed breakdown showing each model's contribution

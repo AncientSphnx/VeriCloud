@@ -10,7 +10,8 @@ import {
   FileVideo,
   BarChart3,
   TrendingUp,
-  Activity
+  Activity,
+  AlertCircle
 } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
@@ -18,12 +19,19 @@ import { Label } from '../components/ui/label'
 import { Input } from '../components/ui/input'
 import { AnalysisNavigation } from '../components/AnalysisNavigation'
 
+interface AnalysisResult {
+  prediction: string
+  confidence: number
+}
+
 export const FaceAnalysis: React.FC = () => {
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isCapturing, setIsCapturing] = useState(false)
   const [stream, setStream] = useState<MediaStream | null>(null)
+  const [result, setResult] = useState<AnalysisResult | null>(null)
+  const [error, setError] = useState<string | null>(null)
   
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -87,17 +95,40 @@ export const FaceAnalysis: React.FC = () => {
   }
 
   const analyzeVideo = async () => {
-    if (!videoUrl && !stream) return
+    if (!videoFile) return
 
     setIsAnalyzing(true)
+    setError(null)
+    setResult(null)
     
-    // TODO: Connect to your Python face detection model here
-    // Example: const result = await fetch('/api/face-analysis', { method: 'POST', body: videoData })
-    
-    // Placeholder - remove this when connecting to your Python model
-    alert('Face analysis will be connected to your Python model. Video/image ready for processing.')
-    
-    setIsAnalyzing(false)
+    try {
+      const formData = new FormData()
+      formData.append('file', videoFile)
+      
+      const response = await fetch('http://127.0.0.1:8002/predict', {
+        method: 'POST',
+        body: formData,
+      })
+      
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`)
+      }
+      
+      const data = await response.json()
+      setResult(data)
+    } catch (err) {
+      console.error('Analysis error:', err)
+      setError(err instanceof Error ? err.message : 'Failed to analyze video. Please ensure the backend is running.')
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
+
+  const clearAnalysis = () => {
+    setVideoFile(null)
+    setVideoUrl(null)
+    setResult(null)
+    setError(null)
   }
 
   return (
@@ -243,16 +274,44 @@ export const FaceAnalysis: React.FC = () => {
           transition={{ duration: 0.6, delay: 0.2 }}
         >
           <Card className="shadow-elegant-lg bg-card/50 backdrop-blur-sm border-muted/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-blue-600" />
+                Analysis Results
+              </CardTitle>
+            </CardHeader>
             <CardContent className="flex items-center justify-center h-96">
-              <div className="text-center space-y-4">
-                <Camera className="h-16 w-16 text-muted-foreground mx-auto" />
-                <h3 className="text-xl font-display font-semibold text-muted-foreground">
-                  Ready for Face Analysis
-                </h3>
-                <p className="text-muted-foreground max-w-sm">
-                  Upload a video file or use your camera, then click "Analyze Video" to connect with your Python model.
-                </p>
-              </div>
+              {error ? (
+                <div className="text-center space-y-4">
+                  <AlertCircle className="h-16 w-16 text-red-500 mx-auto" />
+                  <h3 className="text-xl font-display font-semibold text-red-600">Error</h3>
+                  <p className="text-muted-foreground max-w-sm">{error}</p>
+                </div>
+              ) : result ? (
+                <div className="text-center space-y-6 w-full">
+                  <div>
+                    <h3 className="text-2xl font-display font-bold mb-2">
+                      <span className={result.prediction === 'Deceptive' ? 'text-red-600' : 'text-green-600'}>
+                        {result.prediction}
+                      </span>
+                    </h3>
+                    <p className="text-muted-foreground">Confidence: {(result.confidence * 100).toFixed(2)}%</p>
+                  </div>
+                  <Button onClick={clearAnalysis} variant="outline" size="sm">
+                    Clear Results
+                  </Button>
+                </div>
+              ) : (
+                <div className="text-center space-y-4">
+                  <Camera className="h-16 w-16 text-muted-foreground mx-auto" />
+                  <h3 className="text-xl font-display font-semibold text-muted-foreground">
+                    Ready for Face Analysis
+                  </h3>
+                  <p className="text-muted-foreground max-w-sm">
+                    Upload a video file or use your camera, then click "Analyze Video" to detect deception.
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </motion.div>
