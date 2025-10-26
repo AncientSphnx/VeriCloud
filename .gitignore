@@ -14,7 +14,7 @@ Scripts/
 share/
 *.egg-info/
 *.dist-info/
-.env
+backend/.env
 
 # Jupyter checkpoints
 .ipynb_checkpoints/
