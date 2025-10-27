@@ -7,12 +7,12 @@ from flask_cors import CORS
 from bson import ObjectId
 import os
 
-from .operations import (
+from backend.Database.operations import (
     create_new_user, get_user_by_email, update_user, get_user_by_id,
     get_user_reports, get_session_reports, get_reports_by_type, get_user_report_stats,
     get_reports_dashboard_data, create_user_report_record, verify_password
 )
-from .auth import authenticate_user, generate_token, verify_token
+from backend.Database.auth import authenticate_user, generate_token, verify_token
 
 # Initialize Flask app
 app = Flask(__name__)
