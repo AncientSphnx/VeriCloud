@@ -7,3 +7,4 @@ soundfile
 torch
 numpy
 boto3
+pydub==0.25.1
