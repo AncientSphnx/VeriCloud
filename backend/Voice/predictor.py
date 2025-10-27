@@ -6,7 +6,7 @@ import librosa
 import os
 import boto3
 import tempfile
-from moviepy.editor import VideoFileClip
+from moviepy import VideoFileClip
 from pydub import AudioSegment
 
 # -----------------------------
