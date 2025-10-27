@@ -2,26 +2,17 @@
 API endpoints for authentication and user management.
 This module provides Flask routes for user registration, login, and profile management.
 """
-import sys
-import os
-
-# Ensure backend package is in Python path for imports to work on Render
-_current_dir = os.path.dirname(os.path.abspath(__file__))
-_backend_dir = os.path.dirname(_current_dir)
-_project_root = os.path.dirname(_backend_dir)
-if _project_root not in sys.path:
-    sys.path.insert(0, _project_root)
-
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from bson import ObjectId
+import os
 
-from backend.Database.operations import (
+from .operations import (
     create_new_user, get_user_by_email, update_user, get_user_by_id,
     get_user_reports, get_session_reports, get_reports_by_type, get_user_report_stats,
     get_reports_dashboard_data, create_user_report_record, verify_password
 )
-from backend.Database.auth import authenticate_user, generate_token, verify_token
+from .auth import authenticate_user, generate_token, verify_token
 
 # Initialize Flask app
 app = Flask(__name__)
