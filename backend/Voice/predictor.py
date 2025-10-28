@@ -72,7 +72,7 @@ def load_model(model_path: str = None) -> nn.Module:
         except Exception as e:
             print(f"⚠️ Failed to load model from S3: {e}")
             # Fallback to local
-            local_model_path = os.path.join(os.path.dirname(__file__), 'C:\Users\91829\OneDrive\Desktop\VeriCloud\Voice model\src\models\model_final2.pth')
+            local_model_path = os.path.join(os.path.dirname(__file__), 'model_final2.pth')
             if os.path.exists(local_model_path):
                 print("Using local voice model as fallback.")
                 model_path = local_model_path
