@@ -65,6 +65,14 @@ class EffectiveLieDetectorMultiMode:
             self.model = joblib.load(model_path)
             self.scaler = joblib.load(scaler_path)
             self.extractor = DeceptionFeatureExtractor()
+
+            if hasattr(self.model, "use_label_encoder"):
+                try:
+                    delattr(self.model, "use_label_encoder")
+                    print("⚙️ Patched deprecated 'use_label_encoder' attribute in XGBClassifier.")
+                except Exception:
+                    pass
+                
         except FileNotFoundError as e:
             print(f"[ERROR] Failed to load model: {e}")
             print("[INFO] Please run train_effective_face_model.py first")
