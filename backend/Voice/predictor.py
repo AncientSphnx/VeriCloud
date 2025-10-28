@@ -66,7 +66,7 @@ def load_model(model_path: str = None) -> nn.Module:
         # Try to load from S3
         try:
             bucket = os.getenv("AWS_S3_BUCKET")
-            s3_model_key = os.getenv("VOICE_MODEL_KEY", "models/voice/v1/bilstm_attention_model.pt")
+            s3_model_key = os.getenv("VOICE_MODEL_KEY", "models/voice/v1/model_final2.pth")
             model_path = download_model_from_s3(bucket, s3_model_key)
             print("✅ Voice model loaded successfully from S3.")
         except Exception as e:
