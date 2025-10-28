@@ -29,6 +29,10 @@ def download_model_from_s3(bucket, s3_model_key, s3_vectorizer_key):
         aws_secret_access_key=os.getenv('AWS_SECRET_KEY'),
         region_name=os.getenv('S3_REGION')
     )
+    print("AWS_ACCESS_KEY:", os.getenv('AWS_ACCESS_KEY'))
+    print("AWS_SECRET_KEY:", os.getenv('AWS_SECRET_KEY'))
+    print("S3_BUCKET_NAME:", os.getenv('S3_BUCKET_NAME'))
+    print("TEXT_MODEL_KEY:", os.getenv('TEXT_MODEL_KEY'))
 
     tmp_dir = tempfile.mkdtemp()
 
@@ -53,7 +57,7 @@ def load_model(model_name='logistic_regression'):
     
     # Try to load from S3 first
     try:
-        bucket = os.getenv("AWS_S3_BUCKET")
+        bucket = os.getenv("S3_BUCKET_NAME")
         s3_model_key = os.getenv("TEXT_MODEL_KEY", "models/text/v1/ensemble_20251003_202351.pkl")
         s3_vectorizer_key = os.getenv("TEXT_VECTORIZER_KEY", "models/text/v1/vectorizer.pkl")
         
