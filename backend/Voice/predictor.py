@@ -94,7 +94,7 @@ def convert_to_wav(input_path: str) -> str:
 
     if ext in [".mp4", ".avi", ".mov", ".mkv"]:
         clip = VideoFileClip(input_path)
-        clip.audio.write_audiofile(temp_wav, verbose=False, logger=None)
+        clip.audio.write_audiofile(temp_wav, logger=None)
         return temp_wav
 
     if ext in [".mp3", ".ogg", ".flac"]:
