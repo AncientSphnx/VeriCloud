@@ -6,6 +6,7 @@ import time
 from effective_face_features import DeceptionFeatureExtractor
 import os
 from pathlib import Path
+import xgboost as xgb 
 
 class BaselineEstablisher:
     """Establishes baseline of normal behavior for each person."""
@@ -62,10 +63,20 @@ class EffectiveLieDetectorMultiMode:
         
         print("[INFO] Loading model and scaler...")
         try:
-            self.model = joblib.load(model_path)
+            # ✅ Detect if model is XGBoost JSON format
+            if model_path.endswith(".json"):
+                self.model = xgb.XGBClassifier()
+                self.model.load_model(model_path)
+                print("✅ XGBoost JSON model loaded successfully.")
+            else:
+                self.model = joblib.load(model_path)
+                print("✅ Pickle model loaded successfully.")
+            
+            # Load scaler as usual
             self.scaler = joblib.load(scaler_path)
             self.extractor = DeceptionFeatureExtractor()
 
+            # Patch deprecated field if exists
             if hasattr(self.model, "use_label_encoder"):
                 try:
                     delattr(self.model, "use_label_encoder")
