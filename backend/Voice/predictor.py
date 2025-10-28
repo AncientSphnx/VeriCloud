@@ -40,9 +40,9 @@ def download_model_from_s3(bucket, s3_model_key):
     """
     s3 = boto3.client(
         's3',
-        aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-        aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
-        region_name=os.getenv('AWS_REGION')
+        aws_access_key_id=os.getenv('AWS_ACCESS_KEY'),
+        aws_secret_access_key=os.getenv('AWS_SECRET_KEY'),
+        region_name=os.getenv('S3_REGION')
     )
 
     tmp_dir = tempfile.mkdtemp()
@@ -65,7 +65,7 @@ def load_model(model_path: str = None) -> nn.Module:
     if model_path is None:
         # Try to load from S3
         try:
-            bucket = os.getenv("AWS_S3_BUCKET")
+            bucket = os.getenv("S3_BUCKET_NAME")
             s3_model_key = os.getenv("VOICE_MODEL_KEY", "models/voice/v1/model_final2.pth")
             model_path = download_model_from_s3(bucket, s3_model_key)
             print("✅ Voice model loaded successfully from S3.")

@@ -25,9 +25,9 @@ def download_model_from_s3(bucket, s3_model_key, s3_vectorizer_key):
     """
     s3 = boto3.client(
         's3',
-        aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-        aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
-        region_name=os.getenv('AWS_REGION')
+        aws_access_key_id=os.getenv('AWS_ACCESS_KEY'),
+        aws_secret_access_key=os.getenv('AWS_SECRET_KEY'),
+        region_name=os.getenv('S3_REGION')
     )
 
     tmp_dir = tempfile.mkdtemp()
@@ -54,7 +54,7 @@ def load_model(model_name='logistic_regression'):
     # Try to load from S3 first
     try:
         bucket = os.getenv("AWS_S3_BUCKET")
-        s3_model_key = os.getenv("TEXT_MODEL_KEY", "models/text/v1/logistic_regression.pkl")
+        s3_model_key = os.getenv("TEXT_MODEL_KEY", "models/text/v1/ensemble_20251003_202351.pkl")
         s3_vectorizer_key = os.getenv("TEXT_VECTORIZER_KEY", "models/text/v1/vectorizer.pkl")
         
         model_path, vectorizer_path = download_model_from_s3(bucket, s3_model_key, s3_vectorizer_key)

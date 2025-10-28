@@ -27,9 +27,9 @@ def download_model_from_s3(bucket, s3_model_key, s3_scaler_key):
     """
     s3 = boto3.client(
         's3',
-        aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-        aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
-        region_name=os.getenv('AWS_REGION')
+        aws_access_key_id=os.getenv('AWS_ACCESS_KEY'),
+        aws_secret_access_key=os.getenv('AWS_SECRET_KEY'),
+        region_name=os.getenv('S3_REGION')
     )
 
     tmp_dir = tempfile.mkdtemp()
@@ -51,7 +51,7 @@ def load_face_model():
     Loads the face deception detection model (from S3 or local fallback).
     """
     try:
-        bucket = os.getenv("AWS_S3_BUCKET")
+        bucket = os.getenv("S3_BUCKET_NAME")
         model_key = os.getenv("FACE_MODEL_KEY", "models/face/v1/effective_lie_detector_model.pkl")
         scaler_key = os.getenv("FACE_SCALER_KEY", "models/face/v1/effective_feature_scaler.pkl")
 
