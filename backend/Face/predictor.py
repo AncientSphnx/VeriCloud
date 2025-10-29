@@ -5,6 +5,8 @@ import boto3
 import numpy as np
 import tempfile
 from pathlib import Path
+import xgboost as xgb
+import joblib
 
 # ----------------------------
 # Add Face model directory path
@@ -49,18 +51,44 @@ def download_model_from_s3(bucket, s3_model_key, s3_scaler_key):
 def load_face_model():
     """
     Loads the face deception detection model (from S3 or local fallback).
+    Handles both .json and .pkl models safely.
     """
     try:
         bucket = os.getenv("S3_BUCKET_NAME")
-        model_key = os.getenv("FACE_MODEL_KEY", "models/face/v1/effective_lie_detector_model.json")
+        model_key = os.getenv("FACE_MODEL_KEY", "models/face/v1/effective_lie_detector_model.pkl")
         scaler_key = os.getenv("FACE_SCALER_KEY", "models/face/v1/effective_feature_scaler.pkl")
 
         model_path, scaler_path = download_model_from_s3(bucket, model_key, scaler_key)
 
-        detector = EffectiveLieDetectorMultiMode(
-            model_path=model_path,
-            scaler_path=scaler_path
-        )
+        print("[INFO] Loading model and scaler...")
+        model = None
+
+        # Try XGBoost native loader first
+        try:
+            if model_path.endswith(".json"):
+                model = xgb.XGBClassifier()
+                model.load_model(model_path)
+                print("[INFO] ✅ Loaded XGBoost model from JSON format.")
+            else:
+                # Try XGBoost binary first (pkl containing Booster)
+                try:
+                    model = xgb.XGBClassifier()
+                    model.load_model(model_path)
+                    print("[INFO] ✅ Loaded XGBoost model from binary format.")
+                except xgb.core.XGBoostError:
+                    print("[WARN] Not an XGBoost-native file. Trying joblib...")
+                    model = joblib.load(model_path)
+        except Exception as e:
+            print(f"[WARN] Model load fallback: {e}")
+            model = joblib.load(model_path)
+
+        scaler = joblib.load(scaler_path)
+
+        # Wrap the model + scaler into the detector
+        detector = EffectiveLieDetectorMultiMode(model_path=model_path, scaler_path=scaler_path)
+        detector.model = model
+        detector.scaler = scaler
+
         print("✅ Face model loaded successfully from S3.")
         return detector
 
