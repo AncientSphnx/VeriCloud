@@ -52,6 +52,7 @@ def load_model(model_name='logistic_regression'):
     """
     Load the trained deception detection model and its vectorizer from S3 or local.
     """
+    
     model = None
     vectorizer = None
     
@@ -60,7 +61,9 @@ def load_model(model_name='logistic_regression'):
         bucket = os.getenv("S3_BUCKET_NAME")
         s3_model_key = os.getenv("TEXT_MODEL_KEY", "models/text/v1/ensemble_20251003_202351.pkl")
         s3_vectorizer_key = os.getenv("TEXT_VECTORIZER_KEY", "models/text/v1/vectorizer.pkl")
-        
+        print(f"[DEBUG] ENV AWS_ACCESS_KEY_ID: {os.getenv('AWS_ACCESS_KEY_ID')}")
+        print(f"[DEBUG] ENV S3_BUCKET_NAME: {os.getenv('S3_BUCKET_NAME')}")
+        print(f"[DEBUG] ENV FACE_MODEL_KEY: {os.getenv('FACE_MODEL_KEY')}")
         model_path, vectorizer_path = download_model_from_s3(bucket, s3_model_key, s3_vectorizer_key)
         print("✅ Text model and vectorizer loaded successfully from S3.")
         
