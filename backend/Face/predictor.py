@@ -57,7 +57,9 @@ def load_face_model():
         bucket = os.getenv("S3_BUCKET_NAME")
         model_key = os.getenv("FACE_MODEL_KEY", "models/face/v1/facial_lie_detector.json")
         scaler_key = os.getenv("FACE_SCALER_KEY", "models/face/v1/facial_feature_scaler.pkl")
-
+        print(f"[DEBUG] ENV AWS_ACCESS_KEY_ID: {os.getenv('AWS_ACCESS_KEY_ID')}")
+        print(f"[DEBUG] ENV S3_BUCKET_NAME: {os.getenv('S3_BUCKET_NAME')}")
+        print(f"[DEBUG] ENV FACE_MODEL_KEY: {os.getenv('FACE_MODEL_KEY')}")
         model_path, scaler_path = download_model_from_s3(bucket, model_key, scaler_key)
         print(f"[INFO] Downloaded from S3: {model_path}, {scaler_path}")
 
