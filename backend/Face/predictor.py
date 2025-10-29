@@ -5,7 +5,6 @@ import boto3
 import numpy as np
 import tempfile
 from pathlib import Path
-import xgboost as xgb
 import joblib
 
 # ----------------------------
@@ -39,10 +38,10 @@ def download_model_from_s3(bucket, s3_model_key, s3_scaler_key):
     local_model_path = os.path.join(tmp_dir, os.path.basename(s3_model_key))
     local_scaler_path = os.path.join(tmp_dir, os.path.basename(s3_scaler_key))
 
-    print(f"Downloading face model from s3://{bucket}/{s3_model_key}")
+    print(f"[INFO] Downloading face model from s3://{bucket}/{s3_model_key}")
     s3.download_file(bucket, s3_model_key, local_model_path)
 
-    print(f"Downloading scaler from s3://{bucket}/{s3_scaler_key}")
+    print(f"[INFO] Downloading scaler from s3://{bucket}/{s3_scaler_key}")
     s3.download_file(bucket, s3_scaler_key, local_scaler_path)
 
     return local_model_path, local_scaler_path
@@ -51,28 +50,18 @@ def download_model_from_s3(bucket, s3_model_key, s3_scaler_key):
 def load_face_model():
     """
     Loads the face deception detection model (from S3 or local fallback).
-    Handles both XGBoost JSON and Joblib PKL formats.
+    Supports only .pkl Scikit-Learn models.
     """
     try:
         bucket = os.getenv("S3_BUCKET_NAME")
-        model_key = os.getenv("FACE_MODEL_KEY", "models/face/v1/effective_lie_detector_model.pkl")
-        scaler_key = os.getenv("FACE_SCALER_KEY", "models/face/v1/effective_feature_scaler.pkl")
+        model_key = os.getenv("FACE_MODEL_KEY", "models/face/v1/facial_lie_detector.pkl")
+        scaler_key = os.getenv("FACE_SCALER_KEY", "models/face/v1/facial_feature_scaler.pkl")
 
         model_path, scaler_path = download_model_from_s3(bucket, model_key, scaler_key)
         print(f"[INFO] Downloaded from S3: {model_path}, {scaler_path}")
 
-        # ✅ Load model based on file type
-        if model_path.endswith(".json"):
-            print("[INFO] Loading JSON XGBoost model...")
-            model = xgb.XGBClassifier()
-            model.load_model(model_path)
-        elif model_path.endswith(".pkl"):
-            print("[INFO] Loading Joblib model...")
-            model = joblib.load(model_path)
-        else:
-            raise ValueError("❌ Unknown model format. Expected .json or .pkl")
-
-        # ✅ Load scaler
+        print("[INFO] Loading Scikit-Learn model (.pkl)...")
+        model = joblib.load(model_path)
         scaler = joblib.load(scaler_path)
 
         detector = EffectiveLieDetectorMultiMode(model=model, scaler=scaler)
@@ -82,8 +71,8 @@ def load_face_model():
     except Exception as e:
         print(f"⚠️ Failed to load model from S3: {e}")
         # fallback to local if available
-        local_model_path = os.path.join(face_model_path, 'effective_lie_detector_model.pkl')
-        local_scaler_path = os.path.join(face_model_path, 'effective_feature_scaler.pkl')
+        local_model_path = os.path.join(face_model_path, 'facial_lie_detector.pkl')
+        local_scaler_path = os.path.join(face_model_path, 'facial_feature_scaler.pkl')
 
         if os.path.exists(local_model_path) and os.path.exists(local_scaler_path):
             print("Using local face model as fallback.")
