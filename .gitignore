@@ -30,6 +30,10 @@ backend/.env
 !src/preprocess/metadata.csv
 !src/features/features_pitch2.csv
 !src/fuzzy/fuzzy_params.json
+!Face\ model/*.pkl
+!Face\ model/*.json
+!backend/models/**/*.pkl
+!backend/models/**/*.json
 
 # ==========================
 # React / Node
