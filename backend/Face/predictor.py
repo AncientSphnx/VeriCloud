@@ -41,9 +41,13 @@ def download_model_from_s3(bucket, s3_model_key, s3_scaler_key):
 
     print(f"[INFO] Downloading face model from s3://{bucket}/{s3_model_key}")
     s3.download_file(bucket, s3_model_key, local_model_path)
+    model_size = os.path.getsize(local_model_path)
+    print(f"[INFO] Model file size: {model_size} bytes")
 
     print(f"[INFO] Downloading scaler from s3://{bucket}/{s3_scaler_key}")
     s3.download_file(bucket, s3_scaler_key, local_scaler_path)
+    scaler_size = os.path.getsize(local_scaler_path)
+    print(f"[INFO] Scaler file size: {scaler_size} bytes")
 
     return local_model_path, local_scaler_path
 
@@ -63,14 +67,25 @@ def load_face_model():
         model_path, scaler_path = download_model_from_s3(bucket, model_key, scaler_key)
         print(f"[INFO] Downloaded from S3: {model_path}, {scaler_path}")
 
+        # ✅ Validate file integrity before loading
+        if os.path.getsize(model_path) < 100:
+            raise ValueError(f"Model file too small ({os.path.getsize(model_path)} bytes) - likely corrupted")
+        if os.path.getsize(scaler_path) < 100:
+            raise ValueError(f"Scaler file too small ({os.path.getsize(scaler_path)} bytes) - likely corrupted")
+
         # ✅ Determine model format
         if model_path.endswith(".json"):
             print("[INFO] Loading XGBoost model (.json)...")
             model = xgb.XGBClassifier()
             model.load_model(model_path)
         elif model_path.endswith(".pkl"):
-            print("[INFO] Loading Scikit-Learn model (.pkl)...")
-            model = joblib.load(model_path)
+            print("[INFO] Loading Scikit-Learn or XGBoost model (.pkl)...")
+            try:
+                model = joblib.load(model_path)
+            except Exception as e:
+                print(f"[WARN] joblib.load failed: {e}. Trying XGBoost fallback...")
+                model = xgb.XGBClassifier()
+                model.load_model(model_path)
         else:
             raise ValueError("❌ Unknown model format. Expected .json or .pkl")
 
