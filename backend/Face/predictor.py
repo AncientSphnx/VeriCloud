@@ -78,13 +78,13 @@ def download_model_from_s3(bucket, s3_model_key, s3_scaler_key):
 def load_face_model():
     """
     Loads the face deception detection model from S3 (primary) or local fallback.
-    Uses .json format (most reliable).
+    Uses .pkl format (joblib) for maximum compatibility.
     """
-    # Attempt 1: Try S3 first (primary source) - JSON format only
+    # Attempt 1: Try S3 first (primary source) - PKL format
     try:
         bucket = os.getenv("S3_BUCKET_NAME")
-        # Force .json format for S3
-        model_key = os.getenv("FACE_MODEL_KEY", "models/face/v1/effective_lie_detector_model.json")
+        # Use .pkl format for S3 (joblib is more compatible than XGBoost JSON)
+        model_key = os.getenv("FACE_MODEL_KEY", "models/face/v1/effective_lie_detector_model.pkl")
         scaler_key = os.getenv("FACE_SCALER_KEY", "models/face/v1/effective_feature_scaler.pkl")
         
         if not bucket:
@@ -108,15 +108,9 @@ def load_face_model():
 
         print(f"[DEBUG] File sizes - Model: {model_size} bytes, Scaler: {scaler_size} bytes")
 
-        # ✅ Load JSON model from S3
-        if model_path.endswith(".json"):
-            print("[INFO] Loading XGBoost model (.json) from S3...")
-            model = xgb.XGBClassifier()
-            model.load_model(model_path)
-        else:
-            raise ValueError(f"❌ Expected .json model format, got: {model_path}")
-
-        # ✅ Load scaler
+        # ✅ Load PKL model from S3 using joblib
+        print("[INFO] Loading model (.pkl) from S3 using joblib...")
+        model = joblib.load(model_path)
         scaler = joblib.load(scaler_path)
 
         detector = EffectiveLieDetectorMultiMode(model=model, scaler=scaler)
@@ -126,25 +120,24 @@ def load_face_model():
     except Exception as e:
         print(f"⚠️ Failed to load model from S3: {e}")
         
-        # Attempt 2: Fallback to local JSON model only
-        print("[INFO] Attempting to load from local JSON model as fallback...")
-        local_model_path_json = os.path.join(face_model_path, 'effective_lie_detector_model.json')
+        # Attempt 2: Fallback to local PKL model
+        print("[INFO] Attempting to load from local PKL model as fallback...")
+        local_model_path_pkl = os.path.join(face_model_path, 'effective_lie_detector_model.pkl')
         local_scaler_path = os.path.join(face_model_path, 'effective_feature_scaler.pkl')
 
-        if os.path.exists(local_model_path_json) and os.path.exists(local_scaler_path):
+        if os.path.exists(local_model_path_pkl) and os.path.exists(local_scaler_path):
             try:
-                print("[INFO] Loading local JSON model...")
-                model = xgb.XGBClassifier()
-                model.load_model(local_model_path_json)
+                print("[INFO] Loading local PKL model...")
+                model = joblib.load(local_model_path_pkl)
                 scaler = joblib.load(local_scaler_path)
                 detector = EffectiveLieDetectorMultiMode(model=model, scaler=scaler)
-                print("✅ Face model loaded successfully from local JSON.")
+                print("✅ Face model loaded successfully from local PKL.")
                 return detector
             except Exception as e2:
-                print(f"⚠️ Failed to load local JSON model: {e2}")
+                print(f"⚠️ Failed to load local PKL model: {e2}")
 
         # All attempts failed
-        raise RuntimeError("❌ Face model (.json) not found in S3 or locally. Please ensure the .json model file is available.")
+        raise RuntimeError("❌ Face model (.pkl) not found in S3 or locally. Please ensure the .pkl model file is available.")
 
 
 # ----------------------------
