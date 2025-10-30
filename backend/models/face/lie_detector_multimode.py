@@ -85,11 +85,6 @@ class EffectiveLieDetectorMultiMode:
                         # Create XGBClassifier and set booster
                         self.model = xgb.XGBClassifier()
                         self.model._Booster = booster
-                        # Copy metadata from safe dict if available
-                        if 'n_classes_' in model_data:
-                            self.model.n_classes_ = model_data['n_classes_']
-                        if 'n_features_in_' in model_data:
-                            self.model.n_features_in_ = model_data['n_features_in_']
                         print("✅ Safe dict format model reconstructed successfully.")
                     finally:
                         os.unlink(temp_json_path)
