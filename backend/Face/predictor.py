@@ -38,8 +38,20 @@ if face_model_path is None:
 if face_model_path not in sys.path:
     sys.path.insert(0, face_model_path)
 
-from effective_face_features import DeceptionFeatureExtractor
-from lie_detector_multimode import EffectiveLieDetectorMultiMode, BaselineEstablisher
+# Lazy imports - will be imported on first use to speed up startup
+DeceptionFeatureExtractor = None
+EffectiveLieDetectorMultiMode = None
+BaselineEstablisher = None
+
+def _ensure_imports():
+    """Lazy load heavy dependencies on first use."""
+    global DeceptionFeatureExtractor, EffectiveLieDetectorMultiMode, BaselineEstablisher
+    if DeceptionFeatureExtractor is None:
+        from effective_face_features import DeceptionFeatureExtractor as DFE
+        from lie_detector_multimode import EffectiveLieDetectorMultiMode as ELDM, BaselineEstablisher as BE
+        DeceptionFeatureExtractor = DFE
+        EffectiveLieDetectorMultiMode = ELDM
+        BaselineEstablisher = BE
 
 
 # ----------------------------
@@ -80,6 +92,7 @@ def load_face_model():
     Loads the face deception detection model from S3 (primary) or local fallback.
     Handles both safe dict format and legacy XGBoost format.
     """
+    _ensure_imports()  # Lazy load heavy dependencies
     # Attempt 1: Try S3 first (primary source)
     try:
         bucket = os.getenv("S3_BUCKET_NAME")
@@ -196,6 +209,7 @@ def load_face_model():
 # Predict from video
 # ----------------------------
 def predict_face_video(video_path, detector=None):
+    _ensure_imports()  # Lazy load heavy dependencies
     if detector is None:
         detector = load_face_model()
 
@@ -256,6 +270,7 @@ def predict_face_video(video_path, detector=None):
 # Predict from image
 # ----------------------------
 def predict_face_image(image_path, detector=None):
+    _ensure_imports()  # Lazy load heavy dependencies
     if detector is None:
         detector = load_face_model()
 
