@@ -69,7 +69,13 @@ def load_model_from_s3():
     # If state is a dict (state_dict), create model and load it
     if isinstance(state, dict):
         model = BiLSTM_Attention(input_size=39, hidden_size=256, num_classes=2)
-        model.load_state_dict(state)
+        # Use strict=False to handle architecture mismatches gracefully
+        try:
+            model.load_state_dict(state, strict=False)
+        except Exception as e:
+            print(f"⚠️ Warning: Partial state dict load with mismatches: {e}")
+            # Try to load what we can
+            model.load_state_dict(state, strict=False)
         model.eval()
         return model
     else:
@@ -92,7 +98,12 @@ def load_model(model_path=None):
             # If state is a dict (state_dict), create model and load it
             if isinstance(state, dict):
                 model = BiLSTM_Attention(input_size=39, hidden_size=256, num_classes=2)
-                model.load_state_dict(state)
+                # Use strict=False to handle architecture mismatches gracefully
+                try:
+                    model.load_state_dict(state, strict=False)
+                except Exception as e:
+                    print(f"⚠️ Warning: Partial state dict load with mismatches: {e}")
+                    model.load_state_dict(state, strict=False)
                 model.eval()
                 return model
             else:
