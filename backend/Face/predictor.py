@@ -114,10 +114,20 @@ def load_face_model():
         # Check if it's the safe dict format or legacy XGBoost format
         if isinstance(model_data, dict) and 'booster_json' in model_data:
             print("[INFO] Detected safe dict format - reconstructing model...")
-            booster = xgb.Booster()
-            booster.load_model(model_data['booster_json'])
-            model = xgb.XGBClassifier()
-            model._Booster = booster
+            import tempfile
+            import os as os_module
+            # XGBoost's load_model expects a file path, not a JSON string
+            # Write JSON to temp file and load from there
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+                f.write(model_data['booster_json'])
+                temp_json_path = f.name
+            try:
+                booster = xgb.Booster()
+                booster.load_model(temp_json_path)
+                model = xgb.XGBClassifier()
+                model._Booster = booster
+            finally:
+                os_module.unlink(temp_json_path)
         else:
             print("[INFO] Detected legacy XGBoost format")
             model = model_data
@@ -152,10 +162,20 @@ def load_face_model():
                 # Check if it's the safe dict format or legacy XGBoost format
                 if isinstance(model_data, dict) and 'booster_json' in model_data:
                     print("[INFO] Detected safe dict format - reconstructing model...")
-                    booster = xgb.Booster()
-                    booster.load_model(model_data['booster_json'])
-                    model = xgb.XGBClassifier()
-                    model._Booster = booster
+                    import tempfile
+                    import os as os_module
+                    # XGBoost's load_model expects a file path, not a JSON string
+                    # Write JSON to temp file and load from there
+                    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+                        f.write(model_data['booster_json'])
+                        temp_json_path = f.name
+                    try:
+                        booster = xgb.Booster()
+                        booster.load_model(temp_json_path)
+                        model = xgb.XGBClassifier()
+                        model._Booster = booster
+                    finally:
+                        os_module.unlink(temp_json_path)
                 else:
                     print("[INFO] Detected legacy XGBoost format")
                     model = model_data
