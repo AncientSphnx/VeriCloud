@@ -130,16 +130,24 @@ def load_face_model():
 
     except Exception as e:
         print(f"⚠️ Failed to load model from S3: {e}")
+        import traceback
+        traceback.print_exc()
         
         # Attempt 2: Fallback to local model
         print("[INFO] Attempting to load from local model as fallback...")
         local_model_path_pkl = os.path.join(face_model_path, 'effective_lie_detector_model.pkl')
         local_scaler_path = os.path.join(face_model_path, 'effective_feature_scaler.pkl')
 
+        print(f"[DEBUG] Local model path: {local_model_path_pkl}")
+        print(f"[DEBUG] Local model exists: {os.path.exists(local_model_path_pkl)}")
+        print(f"[DEBUG] Local scaler path: {local_scaler_path}")
+        print(f"[DEBUG] Local scaler exists: {os.path.exists(local_scaler_path)}")
+
         if os.path.exists(local_model_path_pkl) and os.path.exists(local_scaler_path):
             try:
                 print("[INFO] Loading local model...")
                 model_data = joblib.load(local_model_path_pkl)
+                print(f"[DEBUG] Loaded model data type: {type(model_data)}")
                 
                 # Check if it's the safe dict format or legacy XGBoost format
                 if isinstance(model_data, dict) and 'booster_json' in model_data:
@@ -158,6 +166,10 @@ def load_face_model():
                 return detector
             except Exception as e2:
                 print(f"⚠️ Failed to load local model: {e2}")
+                import traceback
+                traceback.print_exc()
+        else:
+            print(f"[DEBUG] Local files not found - model exists: {os.path.exists(local_model_path_pkl)}, scaler exists: {os.path.exists(local_scaler_path)}")
 
         # All attempts failed
         raise RuntimeError("❌ Face model not found in S3 or locally. Please ensure the model file is available.")
