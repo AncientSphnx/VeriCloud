@@ -11,7 +11,7 @@ import xgboost as xgb
 sys.path.insert(0, os.path.dirname(__file__))
 
 def sanitize_booster_json(booster_json_str):
-    """Fix type mismatches in booster JSON."""
+    """Fix type mismatches in booster JSON - convert all 0/1 to false/true in boolean contexts."""
     
     # Parse the JSON
     try:
@@ -21,18 +21,28 @@ def sanitize_booster_json(booster_json_str):
         return None
     
     # Recursively fix type mismatches
-    def fix_types(obj):
+    def fix_types(obj, parent_key=None):
         if isinstance(obj, dict):
-            for key, value in obj.items():
-                # Fix common type mismatches
-                if key in ['missing', 'nan_present', 'has_missing'] and isinstance(value, int):
+            for key, value in list(obj.items()):
+                # Fields that should always be boolean
+                boolean_fields = {
+                    'missing', 'nan_present', 'has_missing', 'default_left',
+                    'boost_from_average', 'allow_null', 'deleted'
+                }
+                
+                if key in boolean_fields and isinstance(value, int):
                     obj[key] = bool(value)
                 elif isinstance(value, (dict, list)):
-                    fix_types(value)
+                    fix_types(value, key)
         elif isinstance(obj, list):
             for i, item in enumerate(obj):
-                if isinstance(item, (dict, list)):
-                    fix_types(item)
+                if isinstance(item, int) and parent_key in {
+                    'default_left', 'deleted', 'categories_nodes'
+                }:
+                    # These should be booleans
+                    obj[i] = bool(item)
+                elif isinstance(item, (dict, list)):
+                    fix_types(item, parent_key)
     
     fix_types(booster_dict)
     
