@@ -17,16 +17,16 @@ class BiLSTM_Attention(nn.Module):
         super(BiLSTM_Attention, self).__init__()
         self.rnn = nn.LSTM(input_size, hidden_size, num_layers=2, bidirectional=True, batch_first=True)
         self.attn_net = nn.Sequential(
-            nn.Linear(hidden_size * 2, 128),
+            nn.Linear(hidden_size * 2, 64),
             nn.ReLU(),
-            nn.Linear(128, 1)
+            nn.Linear(64, 1)
         )
         self.classifier = nn.Sequential(
-            nn.Linear(hidden_size * 2, 128),
+            nn.Linear(hidden_size * 2, 256),
             nn.ReLU(),
-            nn.Linear(128, 64),
+            nn.Linear(256, 256),
             nn.ReLU(),
-            nn.Linear(64, num_classes)
+            nn.Linear(256, num_classes)
         )
 
     def forward(self, x):
