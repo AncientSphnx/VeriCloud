@@ -82,8 +82,14 @@ class EffectiveLieDetectorMultiMode:
                     try:
                         booster = xgb.Booster()
                         booster.load_model(temp_json_path)
+                        # Create XGBClassifier and set booster
                         self.model = xgb.XGBClassifier()
                         self.model._Booster = booster
+                        # Copy metadata from safe dict if available
+                        if 'n_classes_' in model_data:
+                            self.model.n_classes_ = model_data['n_classes_']
+                        if 'n_features_in_' in model_data:
+                            self.model.n_features_in_ = model_data['n_features_in_']
                         print("✅ Safe dict format model reconstructed successfully.")
                     finally:
                         os.unlink(temp_json_path)
@@ -95,13 +101,13 @@ class EffectiveLieDetectorMultiMode:
             self.scaler = joblib.load(scaler_path)
             self.extractor = DeceptionFeatureExtractor()
 
-            # Patch deprecated field if exists
-            if hasattr(self.model, "use_label_encoder"):
-                try:
-                    delattr(self.model, "use_label_encoder")
+            # Patch deprecated field if exists - set to None instead of deleting
+            try:
+                if hasattr(self.model, "use_label_encoder"):
+                    self.model.use_label_encoder = None
                     print("⚙️ Patched deprecated 'use_label_encoder' attribute in XGBClassifier.")
-                except Exception:
-                    pass
+            except Exception as e:
+                print(f"⚠️ Could not patch use_label_encoder: {e}")
                 
         except FileNotFoundError as e:
             print(f"[ERROR] Failed to load model: {e}")
