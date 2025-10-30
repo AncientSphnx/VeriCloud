@@ -69,8 +69,27 @@ class EffectiveLieDetectorMultiMode:
                 self.model.load_model(model_path)
                 print("✅ XGBoost JSON model loaded successfully.")
             else:
-                self.model = joblib.load(model_path)
-                print("✅ Pickle model loaded successfully.")
+                model_data = joblib.load(model_path)
+                
+                # Check if it's the safe dict format with booster_json
+                if isinstance(model_data, dict) and 'booster_json' in model_data:
+                    print("[INFO] Detected safe dict format - reconstructing XGBoost model...")
+                    import tempfile
+                    # Write JSON to temp file and load from there
+                    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+                        f.write(model_data['booster_json'])
+                        temp_json_path = f.name
+                    try:
+                        booster = xgb.Booster()
+                        booster.load_model(temp_json_path)
+                        self.model = xgb.XGBClassifier()
+                        self.model._Booster = booster
+                        print("✅ Safe dict format model reconstructed successfully.")
+                    finally:
+                        os.unlink(temp_json_path)
+                else:
+                    self.model = model_data
+                    print("✅ Pickle model loaded successfully.")
             
             # Load scaler as usual
             self.scaler = joblib.load(scaler_path)
