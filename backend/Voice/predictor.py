@@ -15,18 +15,24 @@ from pydub import AudioSegment
 class BiLSTM_Attention(nn.Module):
     def __init__(self, input_size=39, hidden_size=256, num_classes=2):
         super(BiLSTM_Attention, self).__init__()
-        self.lstm = nn.LSTM(input_size, hidden_size, bidirectional=True, batch_first=True)
-        self.attention = nn.Linear(hidden_size * 2, 1)
-        self.classifier = nn.Sequential(
-            nn.Linear(hidden_size * 2, 256),
+        self.rnn = nn.LSTM(input_size, hidden_size, num_layers=2, bidirectional=True, batch_first=True)
+        self.attn_net = nn.Sequential(
+            nn.Linear(hidden_size * 2, 128),
             nn.ReLU(),
-            nn.Linear(256, num_classes)
+            nn.Linear(128, 1)
+        )
+        self.classifier = nn.Sequential(
+            nn.Linear(hidden_size * 2, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, num_classes)
         )
 
     def forward(self, x):
-        lstm_out, _ = self.lstm(x)  # (batch, seq_len, hidden*2)
-        attn_weights = torch.softmax(self.attention(lstm_out), dim=1)  # (batch, seq_len, 1)
-        context = torch.sum(attn_weights * lstm_out, dim=1)  # Weighted sum
+        rnn_out, _ = self.rnn(x)  # (batch, seq_len, hidden*2)
+        attn_weights = torch.softmax(self.attn_net(rnn_out), dim=1)  # (batch, seq_len, 1)
+        context = torch.sum(attn_weights * rnn_out, dim=1)  # Weighted sum
         out = self.classifier(context)
         return out
 
