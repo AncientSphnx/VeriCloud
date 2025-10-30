@@ -132,9 +132,7 @@ def load_face_model():
             print("[INFO] Detected legacy XGBoost format")
             model = model_data
         
-        scaler = joblib.load(scaler_path)
-
-        detector = EffectiveLieDetectorMultiMode(model=model, scaler=scaler)
+        detector = EffectiveLieDetectorMultiMode(model_path=model_path, scaler_path=scaler_path)
         print("✅ Face model loaded successfully from S3.")
         return detector
 
@@ -180,8 +178,7 @@ def load_face_model():
                     print("[INFO] Detected legacy XGBoost format")
                     model = model_data
                 
-                scaler = joblib.load(local_scaler_path)
-                detector = EffectiveLieDetectorMultiMode(model=model, scaler=scaler)
+                detector = EffectiveLieDetectorMultiMode(model_path=local_model_path_pkl, scaler_path=local_scaler_path)
                 print("✅ Face model loaded successfully from local files.")
                 return detector
             except Exception as e2:
