@@ -59,7 +59,17 @@ def load_model_from_s3():
 
     # Load the PyTorch model
     state = torch.load(local_model_path, map_location="cpu")
-    return state
+    
+    # If state is a dict (state_dict), create model and load it
+    if isinstance(state, dict):
+        model = BiLSTM_Attention(input_size=39, hidden_size=256, num_classes=2)
+        model.load_state_dict(state)
+        model.eval()
+        return model
+    else:
+        # If it's already a model, just return it
+        state.eval()
+        return state
 
 
 def load_model(model_path=None):
@@ -72,7 +82,17 @@ def load_model(model_path=None):
         print(f"⚠️ Failed to load from S3: {e}")
         if model_path and os.path.exists(model_path):
             print("Using local model fallback...")
-            return torch.load(model_path, map_location="cpu")
+            state = torch.load(model_path, map_location="cpu")
+            # If state is a dict (state_dict), create model and load it
+            if isinstance(state, dict):
+                model = BiLSTM_Attention(input_size=39, hidden_size=256, num_classes=2)
+                model.load_state_dict(state)
+                model.eval()
+                return model
+            else:
+                # If it's already a model, just return it
+                state.eval()
+                return state
         else:
             raise RuntimeError("❌ Voice model not found in S3 or locally.")
 
