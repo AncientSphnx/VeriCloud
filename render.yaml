@@ -1,0 +1,58 @@
+services:
+  - type: web
+    name: vericloud-voice
+    env: python
+    plan: free
+    buildCommand: "cd backend/Voice && bash build.sh && pip install -r requirements.txt"
+    startCommand: "cd backend/Voice && uvicorn app:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: S3_BUCKET_NAME
+        value: lie-detection-project
+      - key: VOICE_MODEL_KEY
+        value: models/voice/v1/model_final2.pth
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_REGION
+        value: us-east-1
+
+  - type: web
+    name: vericloud-face
+    env: python
+    plan: free
+    buildCommand: "cd backend/Face && bash build.sh && pip install -r requirements.txt"
+    startCommand: "cd backend/Face && uvicorn app:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: S3_BUCKET_NAME
+        value: lie-detection-project
+      - key: FACE_MODEL_KEY
+        value: models/face/v1/effective_lie_detector_model.pkl
+      - key: FACE_SCALER_KEY
+        value: models/face/v1/effective_feature_scaler.pkl
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_REGION
+        value: us-east-1
+
+  - type: web
+    name: vericloud-text
+    env: python
+    plan: free
+    buildCommand: "cd backend/Text && bash build.sh && pip install -r requirements.txt"
+    startCommand: "cd backend/Text && uvicorn app:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: S3_BUCKET_NAME
+        value: lie-detection-project
+      - key: TEXT_MODEL_KEY
+        value: models/text/v1/logistic_regression.pkl
+      - key: TEXT_VECTORIZER_KEY
+        value: models/text/v1/vectorizer.pkl
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_REGION
+        value: us-east-1
