@@ -18,9 +18,9 @@ app.add_middleware(
 )
 
 # Backend endpoints
-TEXT_API = "http://127.0.0.1:8000/predict_text"
-VOICE_API = "http://127.0.0.1:8001/predict"
-FACE_API = "http://127.0.0.1:8002/predict"
+TEXT_API = "https://vericloud-text-tho9.onrender.com/predict_text"
+VOICE_API = "https://vericloud-y9c9.onrender.com/predict"
+FACE_API = "https://vericloud-face-s8zm.onrender.com/predict"
 
 # ----------------------------
 # S3 Configuration
