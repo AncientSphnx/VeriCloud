@@ -105,7 +105,7 @@ export const VoiceAnalysis: React.FC = () => {
       const formData = new FormData()
       formData.append('file', audioFile)
 
-      const response = await fetch('http://127.0.0.1:8001/predict', {
+      const response = await fetch('https://vericloud-y9c9.onrender.com', {
         method: 'POST',
         body: formData,
       })
