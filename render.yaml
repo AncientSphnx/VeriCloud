@@ -62,7 +62,7 @@ services:
     env: python
     plan: free
     buildCommand: "cd backend/Database && pip install -r requirements.txt"
-    startCommand: "cd backend/Database && flask run --host 0.0.0.0 --port $PORT"
+    startCommand: "cd backend/Database && gunicorn --bind 0.0.0.0:$PORT app:app"
     envVars:
       - key: MONGODB_URI
         sync: false
