@@ -107,32 +107,18 @@ export const FaceAnalysis: React.FC = () => {
       
       const faceApiUrl = process.env.REACT_APP_FACE_API_URL || 'http://127.0.0.1:8002'
       
-      // Create abort controller with 10-minute timeout for video processing
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 10 * 60 * 1000)
+      // No timeout - let the API process as long as needed
+      const response = await fetch(`${faceApiUrl}/predict`, {
+        method: 'POST',
+        body: formData,
+      })
       
-      try {
-        const response = await fetch(`${faceApiUrl}/predict`, {
-          method: 'POST',
-          body: formData,
-          signal: controller.signal,
-        })
-        
-        clearTimeout(timeoutId)
-        
-        if (!response.ok) {
-          throw new Error(`API Error: ${response.status} ${response.statusText}`)
-        }
-        
-        const data = await response.json()
-        setResult(data)
-      } catch (fetchErr) {
-        clearTimeout(timeoutId)
-        if (fetchErr instanceof Error && fetchErr.name === 'AbortError') {
-          throw new Error('Analysis took too long (>10 minutes). Please try with a shorter video.')
-        }
-        throw fetchErr
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`)
       }
+      
+      const data = await response.json()
+      setResult(data)
       
     } catch (err) {
       console.error('Analysis error:', err)

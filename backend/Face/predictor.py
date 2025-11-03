@@ -232,7 +232,7 @@ def predict_face_video(video_path, detector=None):
     predictions = []
     confidences = []
     frame_count = 0
-    max_frames = 2400
+    max_frames = 600  # Process ~20 seconds of video (600 frames at 30fps) for faster analysis
     baseline_frames = 0
     baseline_complete = False
 
