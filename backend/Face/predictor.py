@@ -43,6 +43,9 @@ DeceptionFeatureExtractor = None
 EffectiveLieDetectorMultiMode = None
 BaselineEstablisher = None
 
+# Global model cache - load once, reuse for all requests
+_cached_detector = None
+
 def _ensure_imports():
     """Lazy load heavy dependencies on first use."""
     global DeceptionFeatureExtractor, EffectiveLieDetectorMultiMode, BaselineEstablisher
@@ -90,8 +93,15 @@ def download_model_from_s3(bucket, s3_model_key, s3_scaler_key):
 def load_face_model():
     """
     Loads the face deception detection model from S3 (primary) or local fallback.
-    Handles both safe dict format and legacy XGBoost format.
+    Uses global cache to avoid reloading on every request.
     """
+    global _cached_detector
+    
+    # Return cached model if available
+    if _cached_detector is not None:
+        print("[INFO] Using cached face model")
+        return _cached_detector
+    
     _ensure_imports()  # Lazy load heavy dependencies
     # Attempt 1: Try S3 first (primary source)
     try:
@@ -147,6 +157,7 @@ def load_face_model():
         
         detector = EffectiveLieDetectorMultiMode(model_path=model_path, scaler_path=scaler_path)
         print("✅ Face model loaded successfully from S3.")
+        _cached_detector = detector  # Cache for future requests
         return detector
 
     except Exception as e:
@@ -193,6 +204,7 @@ def load_face_model():
                 
                 detector = EffectiveLieDetectorMultiMode(model_path=local_model_path_pkl, scaler_path=local_scaler_path)
                 print("✅ Face model loaded successfully from local files.")
+                _cached_detector = detector  # Cache for future requests
                 return detector
             except Exception as e2:
                 print(f"⚠️ Failed to load local model: {e2}")

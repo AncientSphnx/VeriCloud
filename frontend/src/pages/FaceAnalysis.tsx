@@ -106,10 +106,18 @@ export const FaceAnalysis: React.FC = () => {
       formData.append('file', videoFile)
       
       const faceApiUrl = process.env.REACT_APP_FACE_API_URL || 'http://127.0.0.1:8002'
+      
+      // Create abort controller with 5-minute timeout for video processing
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000)
+      
       const response = await fetch(`${faceApiUrl}/predict`, {
         method: 'POST',
         body: formData,
+        signal: controller.signal,
       })
+      
+      clearTimeout(timeoutId)
       
       if (!response.ok) {
         throw new Error(`API Error: ${response.status} ${response.statusText}`)
