@@ -16,7 +16,12 @@ from .auth import authenticate_user, generate_token, verify_token
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+# Enable CORS with explicit configuration
+CORS(app, 
+     origins="*",
+     allow_headers=["Content-Type", "Authorization"],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+     supports_credentials=True)
 
 # Authentication routes
 @app.route('/api/auth/register', methods=['POST'])
