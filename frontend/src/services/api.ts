@@ -2,7 +2,8 @@
  * API service for authentication and data operations
  */
 
-const API_URL = 'http://localhost:5001';
+// Use environment variable or fallback to localhost for development
+const API_URL = process.env.REACT_APP_API_URL || 'https://vericloud-db-wbhv.onrender.com';
 
 // Authentication API calls
 export const authAPI = {
