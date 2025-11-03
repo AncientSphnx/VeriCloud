@@ -2,7 +2,7 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 import tempfile
 import os
-from predictor import predict_face
+from predictor import predict_face, load_face_model
 
 app = FastAPI()
 
@@ -14,6 +14,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Pre-load model on startup to avoid timeout on first request
+@app.on_event("startup")
+async def startup_event():
+    try:
+        print("[INFO] Pre-loading Face model on startup...")
+        load_face_model()
+        print("[INFO] Face model loaded successfully")
+    except Exception as e:
+        print(f"[WARN] Could not pre-load model: {e}")
+        print("[INFO] Will load on first request instead")
 
 
 @app.post("/predict")
@@ -45,4 +56,9 @@ async def predict_endpoint(file: UploadFile = File(...)):
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "ok", "service": "face-analysis"}
+    try:
+        # Try to load model to ensure it's working
+        load_face_model()
+        return {"status": "ok", "service": "face-analysis", "model": "loaded"}
+    except Exception as e:
+        return {"status": "error", "service": "face-analysis", "error": str(e)}, 503
