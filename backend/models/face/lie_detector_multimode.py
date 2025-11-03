@@ -6,7 +6,11 @@ import time
 from effective_face_features import DeceptionFeatureExtractor
 import os
 from pathlib import Path
-import xgboost as xgb 
+import xgboost as xgb
+import warnings
+
+# Suppress sklearn version warning - scaler works fine across versions
+warnings.filterwarnings('ignore', category=UserWarning, module='sklearn') 
 
 class BaselineEstablisher:
     """Establishes baseline of normal behavior for each person."""
@@ -92,8 +96,10 @@ class EffectiveLieDetectorMultiMode:
                     self.model = model_data
                     print("✅ Pickle model loaded successfully.")
             
-            # Load scaler as usual
-            self.scaler = joblib.load(scaler_path)
+            # Load scaler as usual (suppress sklearn version warning)
+            with warnings.catch_warnings():
+                warnings.filterwarnings('ignore', category=UserWarning)
+                self.scaler = joblib.load(scaler_path)
             self.extractor = DeceptionFeatureExtractor()
 
             # Patch deprecated field if exists - set to None instead of deleting
