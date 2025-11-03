@@ -105,7 +105,8 @@ export const FaceAnalysis: React.FC = () => {
       const formData = new FormData()
       formData.append('file', videoFile)
       
-      const response = await fetch('http://127.0.0.1:8002/predict', {
+      const faceApiUrl = process.env.REACT_APP_FACE_API_URL || 'http://127.0.0.1:8002'
+      const response = await fetch(`${faceApiUrl}/predict`, {
         method: 'POST',
         body: formData,
       })

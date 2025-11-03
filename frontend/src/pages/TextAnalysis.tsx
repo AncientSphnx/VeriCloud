@@ -40,7 +40,8 @@ export const TextAnalysis: React.FC = () => {
       formData.append('text', textInput)
       
       // Call the backend API
-      const response = await fetch('http://127.0.0.1:8000/predict_text', {
+      const textApiUrl = process.env.REACT_APP_TEXT_API_URL || 'http://127.0.0.1:8000'
+      const response = await fetch(`${textApiUrl}/predict_text`, {
         method: 'POST',
         body: formData,
       })

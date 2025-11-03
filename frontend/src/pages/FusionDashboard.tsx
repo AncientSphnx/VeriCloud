@@ -88,7 +88,8 @@ export const FusionDashboard: React.FC = () => {
         formData.append('video_file', videoFile)
       }
       
-      const response = await fetch('http://127.0.0.1:8003/predict_fusion', {
+      const fusionApiUrl = process.env.REACT_APP_FUSION_API_URL || 'http://127.0.0.1:8003'
+      const response = await fetch(`${fusionApiUrl}/predict_fusion`, {
         method: 'POST',
         body: formData,
       })
