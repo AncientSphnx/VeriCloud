@@ -56,3 +56,17 @@ services:
         sync: false
       - key: S3_REGION
         value: us-east-1
+
+  - type: web
+    name: vericloud-database
+    env: python
+    plan: free
+    buildCommand: "cd backend/Database && pip install -r requirements.txt"
+    startCommand: "cd backend/Database && flask run --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: FLASK_ENV
+        value: production
