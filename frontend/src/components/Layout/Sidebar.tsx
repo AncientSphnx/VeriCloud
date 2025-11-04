@@ -52,8 +52,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, darkMode }) =
       
       {/* Sidebar */}
       <motion.div
-        initial={{ x: 0 }}
-        animate={{ x: 0}}
+        initial={{ x: '-100%' }}
+        animate={{ x: isOpen ? 0 : '-100%' }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
         className="fixed left-0 top-0 h-full w-64 bg-card border-r border-border z-50 lg:relative lg:translate-x-0 lg:z-auto"
       >

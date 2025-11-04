@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: vericloud-voice
+    name: vericloud
     env: python
     plan: free
     buildCommand: "cd backend/Voice && bash build.sh && pip install -r requirements.txt"
@@ -56,17 +56,3 @@ services:
         sync: false
       - key: S3_REGION
         value: us-east-1
-
-  - type: web
-    name: vericloud-database
-    env: python
-    plan: free
-    buildCommand: "cd backend/Database && pip install -r requirements.txt"
-    startCommand: "cd backend/Database && gunicorn --bind 0.0.0.0:$PORT app:app"
-    envVars:
-      - key: MONGODB_URI
-        sync: false
-      - key: JWT_SECRET
-        sync: false
-      - key: FLASK_ENV
-        value: production
