@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { 
@@ -39,6 +39,13 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, darkMode }) => {
   const location = useLocation()
   const { user, logout } = useAuth()
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024)
+
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth >= 1024)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   return (
     <>
@@ -52,10 +59,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, darkMode }) =
       
       {/* Sidebar */}
       <motion.div
-        initial={{ x: '-100%' }}
-        animate={{ x: isOpen ? 0 : '-100%' }}
+        initial={false}
+        animate={{ x: isDesktop ? 0 : (isOpen ? 0 : '-100%') }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="fixed left-0 top-0 h-full w-64 bg-card border-r border-border z-50 lg:relative lg:translate-x-0 lg:z-auto"
+        className="fixed left-0 top-0 h-full w-64 bg-card border-r border-border z-50 lg:relative lg:z-auto"
       >
         <div className="flex flex-col h-full">
           {/* Header */}
