@@ -1,4 +1,5 @@
-import { type ClassValue, clsx } from "clsx";
+// Utility functions for VeriCloud frontend
+import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge";
 
 /**
