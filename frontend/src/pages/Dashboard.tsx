@@ -16,7 +16,9 @@ import {
 } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
+import { Badge } from '../components/ui'
 import { useAuth } from '../contexts/AuthContext'
+import { getConfidenceDescription, getConfidenceColor, getConfidenceBadgeVariant } from '../utils/confidenceUtils'
 import api from '../services/api'
 
 interface Report {
@@ -36,6 +38,58 @@ interface DashboardStats {
   average_confidence: number
   module_types: { [key: string]: number }
   recent_reports?: Report[]
+}
+
+interface DashboardData {
+  period_days: number
+  total_reports: number
+  completed_reports: number
+  completion_rate: number
+  average_confidence: number
+  module_types: { [key: string]: number }
+  recent_reports?: Report[]
+}
+
+// Helper function to normalize confidence values from database
+const normalizeConfidence = (report: Report): number => {
+  // If confidence_percentage seems to be in decimal format (< 1), convert to percentage
+  if (report.confidence_percentage < 1) {
+    return report.confidence_percentage * 100
+  }
+  // If confidence_percentage seems to be already multiplied (like 5000%), normalize it
+  if (report.confidence_percentage > 100) {
+    return report.confidence_percentage / 100
+  }
+  // Otherwise, use as-is
+  return report.confidence_percentage
+}
+
+// Helper component for displaying confidence with descriptive levels
+const ConfidenceDisplay: React.FC<{ report: Report }> = ({ report }) => {
+  const normalizedConfidence = normalizeConfidence(report)
+  const confidenceResult = getConfidenceDescription(report.prediction, normalizedConfidence / 100)
+  
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center gap-2">
+        <Badge variant={getConfidenceBadgeVariant(normalizedConfidence / 100)} className="text-xs">
+          {confidenceResult.descriptiveLevel}
+        </Badge>
+        <span className={`text-sm font-medium ${confidenceResult.colorClass}`}>
+          {confidenceResult.prediction}
+        </span>
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="w-12 bg-gray-200 rounded-full h-1">
+          <div 
+            className={`h-1 rounded-full ${getConfidenceColor(normalizedConfidence / 100)}`}
+            style={{ width: `${normalizedConfidence}%` }}
+          />
+        </div>
+        <span className="text-xs font-medium">{normalizedConfidence.toFixed(1)}%</span>
+      </div>
+    </div>
+  )
 }
 
 export const Dashboard: React.FC = () => {
@@ -78,7 +132,7 @@ export const Dashboard: React.FC = () => {
         const truthfulCount = reportsArray.filter((r: Report) => r.prediction === 'Truthful').length
         const deceptiveCount = reportsArray.filter((r: Report) => r.prediction === 'Deceptive').length
         const averageConfidence = reportsArray.length > 0 
-          ? reportsArray.reduce((sum: number, r: Report) => sum + r.confidence_percentage, 0) / reportsArray.length 
+          ? reportsArray.reduce((sum: number, r: Report) => sum + normalizeConfidence(r), 0) / reportsArray.length 
           : 0
         
         const moduleTypes = reportsArray.reduce((acc: any, r: Report) => {
@@ -385,9 +439,7 @@ export const Dashboard: React.FC = () => {
                           </p>
                           <div className="flex items-center space-x-2 mt-1">
                             {getPredictionIcon(report.prediction)}
-                            <p className={`text-sm font-medium ${getPredictionColor(report.prediction)}`}>
-                              {report.prediction} • {report.confidence_percentage}% Confidence
-                            </p>
+                            <ConfidenceDisplay report={report} />
                           </div>
                         </div>
                       </div>
