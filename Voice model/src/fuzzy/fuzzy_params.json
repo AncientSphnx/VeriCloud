@@ -1,0 +1,12 @@
+{
+  "name": "fuzzy_sugeno",
+  "inputs_used": {
+    "tonal_stable_ratio": 0.1987,
+    "stress_energy_cv": 0.8645
+  },
+  "learning_rate": 0.0008,
+  "hidden_size": 256,
+  "dropout": 0.4,
+  "with_attention": true,
+  "attention_size": 64
+}

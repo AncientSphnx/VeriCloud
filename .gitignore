@@ -1,0 +1,65 @@
+# ==========================
+# Python / ML
+# ==========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+env/
+Lib/
+Scripts/
+share/
+*.egg-info/
+*.dist-info/
+backend/.env
+.env
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Model artifacts (large binary files)
+*.h5
+*.pt
+*.pth
+
+# But keep the specific model files you need
+!src/models/model_final2.pth
+!src/preprocess/features2.h5
+!src/preprocess/metadata.csv
+!src/features/features_pitch2.csv
+!src/fuzzy/fuzzy_params.json
+!Face\ model/*.pkl
+!Face\ model/*.json
+!backend/models/**/*.pkl
+!backend/models/**/*.json
+
+# ==========================
+# React / Node
+# ==========================
+frontend/node_modules/
+frontend/.cache/
+frontend/dist/
+frontend/build/
+
+# Env files
+frontend/.env.local
+frontend/.env
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ==========================
+# General
+# ==========================
+.DS_Store
+Thumbs.db
+
+# ==========================
+# Datasets (too big for GitHub)
+# ==========================
+Voice dataset/
