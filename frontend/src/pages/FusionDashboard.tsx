@@ -19,6 +19,8 @@ import {
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Label } from '../components/ui/label'
+import { Badge } from '../components/ui'
+import { getConfidenceDescription, getConfidenceColor, getConfidenceBadgeVariant } from '../utils/confidenceUtils'
 import { 
   ResponsiveContainer,
   BarChart,
@@ -50,7 +52,7 @@ interface FusionResult {
       weight: number
       contribution: number
     }
-    face?: {
+    face: {
       prediction: string
       confidence: number
       weight: number
@@ -61,6 +63,32 @@ interface FusionResult {
   weights_used: Record<string, number>
   errors?: Record<string, string>
 }
+
+// Helper component for displaying fusion confidence results
+const FusionConfidenceDisplay: React.FC<{ fusionResult: FusionResult }> = ({ fusionResult }) => {
+  const confidenceResult = getConfidenceDescription(fusionResult.final_prediction, fusionResult.final_confidence);
+  
+  return (
+    <>
+      <div className="flex items-center justify-center gap-3 mb-2">
+        {confidenceResult.prediction.toLowerCase().includes('truthful') ? (
+          <CheckCircle className="h-12 w-12 text-green-600" />
+        ) : (
+          <AlertTriangle className="h-12 w-12 text-red-600" />
+        )}
+        <CardTitle className={`text-4xl font-display ${confidenceResult.colorClass}`}>
+          {confidenceResult.prediction}
+        </CardTitle>
+      </div>
+      <Badge variant={getConfidenceBadgeVariant(fusionResult.final_confidence)} className="mb-2">
+        {confidenceResult.descriptiveLevel}
+      </Badge>
+      <CardDescription className="text-lg">
+        {confidenceResult.description}
+      </CardDescription>
+    </>
+  );
+};
 
 export const FusionDashboard: React.FC = () => {
   const [fusionResult, setFusionResult] = useState<FusionResult | null>(null)
@@ -384,23 +412,7 @@ export const FusionDashboard: React.FC = () => {
                 : 'border-red-500/50'
             }`}>
               <CardHeader className="text-center">
-                <div className="flex items-center justify-center gap-3 mb-2">
-                  {fusionResult.final_prediction === 'Truthful' ? (
-                    <CheckCircle className="h-12 w-12 text-green-600" />
-                  ) : (
-                    <AlertTriangle className="h-12 w-12 text-red-600" />
-                  )}
-                  <CardTitle className={`text-4xl font-display ${
-                    fusionResult.final_prediction === 'Truthful' 
-                      ? 'text-green-600' 
-                      : 'text-red-600'
-                  }`}>
-                    {fusionResult.final_prediction}
-                  </CardTitle>
-                </div>
-                <CardDescription className="text-lg">
-                  Fusion Confidence: {(fusionResult.final_confidence * 100).toFixed(1)}%
-                </CardDescription>
+                <FusionConfidenceDisplay fusionResult={fusionResult} />
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4">

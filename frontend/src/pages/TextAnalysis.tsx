@@ -14,13 +14,43 @@ import {
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Label } from '../components/ui/label'
+import { Badge } from '../components/ui'
 import { AnalysisNavigation } from '../components/AnalysisNavigation'
 import { useAuth } from '../contexts/AuthContext'
+import { getConfidenceDescription, getConfidenceColor, getConfidenceBadgeVariant } from '../utils/confidenceUtils'
 
 interface AnalysisResult {
   prediction: string
   confidence: number
 }
+
+// Helper component for displaying confidence results
+const ConfidenceResultDisplay: React.FC<{ result: AnalysisResult }> = ({ result }) => {
+  const confidenceResult = getConfidenceDescription(result.prediction, result.confidence);
+  
+  return (
+    <div className="text-center space-y-4 p-6 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+      <div className="flex items-center justify-center gap-3">
+        {confidenceResult.prediction.toLowerCase().includes('truthful') ? (
+          <CheckCircle className="h-12 w-12 text-green-600" />
+        ) : (
+          <AlertCircle className="h-12 w-12 text-red-600" />
+        )}
+        <h3 className="text-3xl font-display font-bold">
+          <span className={confidenceResult.colorClass}>
+            {confidenceResult.prediction}
+          </span>
+        </h3>
+      </div>
+      <Badge variant={getConfidenceBadgeVariant(result.confidence)} className="mb-2">
+        {confidenceResult.descriptiveLevel}
+      </Badge>
+      <p className="text-muted-foreground">
+        {confidenceResult.description}
+      </p>
+    </div>
+  );
+};
 
 export const TextAnalysis: React.FC = () => {
   const { user } = useAuth()
@@ -241,23 +271,7 @@ export const TextAnalysis: React.FC = () => {
                   className="space-y-6"
                 >
                   {/* Prediction Result */}
-                  <div className="text-center space-y-4 p-6 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                    <div className="flex items-center justify-center gap-3">
-                      {result.prediction === 'Truthful' ? (
-                        <CheckCircle className="h-12 w-12 text-green-600" />
-                      ) : (
-                        <AlertCircle className="h-12 w-12 text-red-600" />
-                      )}
-                      <h3 className="text-3xl font-display font-bold">
-                        <span className={result.prediction === 'Truthful' ? 'text-green-600' : 'text-red-600'}>
-                          {result.prediction}
-                        </span>
-                      </h3>
-                    </div>
-                    <p className="text-muted-foreground">
-                      The text appears to be {result.prediction.toLowerCase()}
-                    </p>
-                  </div>
+                  <ConfidenceResultDisplay result={result} />
                   
                   {/* Confidence Score */}
                   <div className="space-y-3">

@@ -17,13 +17,52 @@ import { Button } from '../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Label } from '../components/ui/label'
 import { Input } from '../components/ui/input'
+import { Badge } from '../components/ui'
 import { AnalysisNavigation } from '../components/AnalysisNavigation'
 import { useAuth } from '../contexts/AuthContext'
+import { getConfidenceDescription, getConfidenceColor, getConfidenceBadgeVariant } from '../utils/confidenceUtils'
 
 interface AnalysisResult {
   prediction: string
   confidence: number
 }
+
+// Helper component for displaying confidence results
+const ConfidenceResultDisplay: React.FC<{ 
+  result: AnalysisResult; 
+  onClearAnalysis: () => void;
+}> = ({ result, onClearAnalysis }) => {
+  const confidenceResult = getConfidenceDescription(result.prediction, result.confidence);
+  
+  return (
+    <div className="text-center space-y-6 w-full">
+      <div>
+        <h3 className="text-2xl font-display font-bold mb-2">
+          <span className={confidenceResult.colorClass}>
+            {confidenceResult.prediction}
+          </span>
+        </h3>
+        <Badge variant={getConfidenceBadgeVariant(result.confidence)} className="mb-2">
+          {confidenceResult.descriptiveLevel}
+        </Badge>
+        <p className="text-muted-foreground text-sm mb-3">{confidenceResult.description}</p>
+        <div className="flex items-center justify-center space-x-2">
+          <span className="text-sm text-muted-foreground">Confidence:</span>
+          <div className="w-32 bg-gray-200 rounded-full h-2">
+            <div 
+              className={`h-2 rounded-full ${getConfidenceColor(result.confidence)}`}
+              style={{ width: `${(result.confidence * 100).toFixed(2)}%` }}
+            />
+          </div>
+          <span className="text-sm font-medium">{(result.confidence * 100).toFixed(2)}%</span>
+        </div>
+      </div>
+      <Button onClick={onClearAnalysis} variant="outline" size="sm">
+        Clear Results
+      </Button>
+    </div>
+  );
+};
 
 export const FaceAnalysis: React.FC = () => {
   const { user } = useAuth()
@@ -302,19 +341,7 @@ export const FaceAnalysis: React.FC = () => {
                   <p className="text-muted-foreground max-w-sm">{error}</p>
                 </div>
               ) : result ? (
-                <div className="text-center space-y-6 w-full">
-                  <div>
-                    <h3 className="text-2xl font-display font-bold mb-2">
-                      <span className={result.prediction === 'Deceptive' ? 'text-red-600' : 'text-green-600'}>
-                        {result.prediction}
-                      </span>
-                    </h3>
-                    <p className="text-muted-foreground">Confidence: {(result.confidence * 100).toFixed(2)}%</p>
-                  </div>
-                  <Button onClick={clearAnalysis} variant="outline" size="sm">
-                    Clear Results
-                  </Button>
-                </div>
+                <ConfidenceResultDisplay result={result} onClearAnalysis={clearAnalysis} />
               ) : (
                 <div className="text-center space-y-4">
                   <Camera className="h-16 w-16 text-muted-foreground mx-auto" />
