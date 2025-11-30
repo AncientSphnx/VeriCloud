@@ -3,9 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 import tempfile, os
 from predictor import predict
 import requests
-import os
+from pathlib import Path
 
-MODEL_PATH = r"C:\Users\91829\OneDrive\Desktop\VeriCloud\Voice model\src\models\model_final2.pth"  # adjust path if needed
+# Get project root directory (3 levels up from this file)
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+MODEL_PATH = os.path.join(PROJECT_ROOT, "Voice model", "src", "models", "model_final2.pth")
 
 app = FastAPI()
 

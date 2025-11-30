@@ -2,9 +2,12 @@ import shutil
 import os
 import joblib
 import xgboost as xgb
+from pathlib import Path
 
-src = r'c:\Users\91829\OneDrive\Desktop\VeriCloud\backend\models\face\effective_lie_detector_model_safe.pkl'
-dst = r'c:\Users\91829\OneDrive\Desktop\VeriCloud\backend\models\face\effective_lie_detector_model.pkl'
+# Get project root directory (4 levels up from this file)
+PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
+src = os.path.join(PROJECT_ROOT, "backend", "models", "face", "effective_lie_detector_model_safe.pkl")
+dst = os.path.join(PROJECT_ROOT, "backend", "models", "face", "effective_lie_detector_model.pkl")
 
 # Replace
 shutil.copy(src, dst)

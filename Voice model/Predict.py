@@ -137,5 +137,10 @@ def launch_gui(model_path):
 # 7. Run GUI
 # -----------------------------
 if __name__ == "__main__":
-    model_path = r"C:\Users\91829\OneDrive\Desktop\Project truth 7.0\Project truth 6.0\src\models\model_final2.pth"  # Change to your model path
+    import os
+    from pathlib import Path
+    
+    # Get project root directory (2 levels up from this file)
+    PROJECT_ROOT = Path(__file__).parent.parent
+    model_path = os.path.join(PROJECT_ROOT, "Voice model", "src", "models", "model_final2.pth")
     launch_gui(model_path)

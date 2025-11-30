@@ -115,7 +115,8 @@ export const VoiceAnalysis: React.FC = () => {
         console.warn('⚠️ No user logged in - voice report will not be saved')
       }
 
-      const response = await fetch('https://vericloud-y9c9.onrender.com/predict', {
+      const voiceApiUrl = process.env.REACT_APP_VOICE_API_URL || 'http://127.0.0.1:8001'
+      const response = await fetch(`${voiceApiUrl}/predict`, {
         method: 'POST',
         body: formData,
       })

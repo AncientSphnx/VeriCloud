@@ -115,7 +115,7 @@ export const FaceAnalysis: React.FC = () => {
         console.warn('⚠️ No user logged in - face report will not be saved')
       }
       
-      const faceApiUrl = process.env.REACT_APP_FACE_API_URL || 'https://vericloud-face-s8zm.onrender.com'
+      const faceApiUrl = process.env.REACT_APP_FACE_API_URL || 'http://127.0.0.1:8002'
       
       // No timeout - let the API process as long as needed
       const response = await fetch(`${faceApiUrl}/predict`, {

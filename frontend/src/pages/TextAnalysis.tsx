@@ -50,7 +50,7 @@ export const TextAnalysis: React.FC = () => {
       }
       
       // Call the backend API
-      const textApiUrl = process.env.REACT_APP_TEXT_API_URL || 'https://vericloud-text-tho9.onrender.com'
+      const textApiUrl = process.env.REACT_APP_TEXT_API_URL || 'http://127.0.0.1:8000'
       const response = await fetch(`${textApiUrl}/predict_text`, {
         method: 'POST',
         body: formData,
