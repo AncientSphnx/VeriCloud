@@ -18,8 +18,10 @@ import { Button } from '../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
+import { Badge } from '../components/ui'
 import { formatDate } from '../lib/utils'
 import { useAuth } from '../contexts/AuthContext'
+import { getConfidenceDescription, getConfidenceColor, getConfidenceBadgeVariant } from '../utils/confidenceUtils'
 import api from '../services/api'
 
 interface Report {
@@ -47,6 +49,58 @@ interface DashboardData {
   report_types: { [key: string]: number }
   average_confidence: number
   recent_reports: Report[]
+}
+
+interface DashboardStats {
+  total_reports: number
+  completed_reports: number
+  average_confidence: number
+  recent_reports: Report[]
+}
+
+// Helper function to normalize confidence values from database
+const normalizeConfidence = (report: Report): number => {
+  // If confidence_percentage seems to be in decimal format (< 1), convert to percentage
+  if (report.confidence_percentage < 1) {
+    return report.confidence_percentage * 100
+  }
+  // If confidence_percentage seems to be already multiplied (like 5000%), normalize it
+  if (report.confidence_percentage > 100) {
+    return report.confidence_percentage / 100
+  }
+  // Otherwise, use as-is
+  return report.confidence_percentage
+}
+
+// Helper component for displaying confidence with descriptive levels
+const ConfidenceDisplay: React.FC<{ report: Report }> = ({ report }) => {
+  const normalizedConfidence = normalizeConfidence(report)
+  const confidenceResult = getConfidenceDescription(report.prediction, normalizedConfidence / 100)
+  
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center gap-2">
+        <Badge variant={getConfidenceBadgeVariant(normalizedConfidence / 100)}>
+          {confidenceResult.descriptiveLevel}
+        </Badge>
+        <span className={`text-sm font-medium ${confidenceResult.colorClass}`}>
+          {confidenceResult.prediction}
+        </span>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {confidenceResult.description}
+      </p>
+      <div className="flex items-center gap-2">
+        <div className="w-16 bg-gray-200 rounded-full h-1.5">
+          <div 
+            className={`h-1.5 rounded-full ${getConfidenceColor(normalizedConfidence / 100)}`}
+            style={{ width: `${normalizedConfidence}%` }}
+          />
+        </div>
+        <span className="text-xs font-medium">{normalizedConfidence.toFixed(2)}%</span>
+      </div>
+    </div>
+  )
 }
 
 export const Reports: React.FC = () => {
@@ -174,7 +228,7 @@ export const Reports: React.FC = () => {
         const deceptiveCount = reportsArray.filter((r: Report) => r.prediction === 'Deceptive').length
         const completionRate = totalReports > 0 ? (truthfulCount + deceptiveCount) / totalReports * 100 : 0
         const averageConfidence = reportsArray.length > 0 
-          ? reportsArray.reduce((sum: number, r: Report) => sum + r.confidence_percentage, 0) / reportsArray.length 
+          ? reportsArray.reduce((sum: number, r: Report) => sum + normalizeConfidence(r), 0) / reportsArray.length 
           : 0
         
         const reportTypes = reportsArray.reduce((acc: any, r: Report) => {
@@ -234,7 +288,7 @@ export const Reports: React.FC = () => {
         report._id,
         report.module_type,
         report.prediction,
-        `${report.confidence_percentage}%`,
+        `${normalizeConfidence(report).toFixed(2)}%`,
         report.status,
         formatDate(new Date(report.timestamp)),
         report.session_id || 'N/A'
@@ -585,9 +639,7 @@ export const Reports: React.FC = () => {
                           {formatDate(new Date(report.timestamp))}
                           {report.session_id && ` • Session: ${report.session_id.slice(-8)}`}
                         </p>
-                        <p className="text-sm text-muted-foreground">
-                          Prediction: {report.prediction} • Confidence: {report.confidence_percentage}%
-                        </p>
+                        <ConfidenceDisplay report={report} />
                       </div>
                     </div>
                     <div className="text-right">
