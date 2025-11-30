@@ -8,8 +8,16 @@ from typing import Optional
 import uuid
 from datetime import datetime
 import sys
+import os
 
-# Add parent directory to path for imports
+# Ensure backend package is in Python path for imports to work on Render
+_current_dir = os.path.dirname(os.path.abspath(__file__))
+_backend_dir = os.path.dirname(_current_dir)
+_project_root = os.path.dirname(_backend_dir)
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
+
+# Add parent directory to path for imports (fallback)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
