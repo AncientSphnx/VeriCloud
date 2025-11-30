@@ -197,11 +197,15 @@ async def predict_fusion(
     
     # 1. Text Analysis
     try:
+        print(f"🔍 Calling Text API at: {TEXT_API}")
         text_form = {"text": text}
         text_response = requests.post(TEXT_API, data=text_form)
+        print(f"📝 Text API response status: {text_response.status_code}")
         text_response.raise_for_status()
         results["text"] = text_response.json()
+        print(f"📝 Text API result: {results['text']}")
     except Exception as e:
+        print(f"❌ Text API error: {str(e)}")
         errors["text"] = str(e)
         results["text"] = {"prediction": "Unknown", "confidence": 0.0}
     
@@ -215,15 +219,19 @@ async def predict_fusion(
                 tmp_path = tmp.name
             
             # Call voice API
+            print(f"🔍 Calling Voice API at: {VOICE_API}")
             with open(tmp_path, 'rb') as f:
                 files = {'file': (audio_file.filename, f, audio_file.content_type)}
                 voice_response = requests.post(VOICE_API, files=files)
+                print(f"🎤 Voice API response status: {voice_response.status_code}")
                 voice_response.raise_for_status()
                 results["voice"] = voice_response.json()
+                print(f"🎤 Voice API result: {results['voice']}")
             
             # Clean up
             os.remove(tmp_path)
         except Exception as e:
+            print(f"❌ Voice API error: {str(e)}")
             errors["voice"] = str(e)
             results["voice"] = {"prediction": "Unknown", "confidence": 0.0}
     else:
@@ -240,15 +248,19 @@ async def predict_fusion(
                 tmp_path = tmp.name
             
             # Call face API
+            print(f"🔍 Calling Face API at: {FACE_API}")
             with open(tmp_path, 'rb') as f:
                 files = {'file': (video_file.filename, f, video_file.content_type)}
                 face_response = requests.post(FACE_API, files=files)
+                print(f"👤 Face API response status: {face_response.status_code}")
                 face_response.raise_for_status()
                 results["face"] = face_response.json()
+                print(f"👤 Face API result: {results['face']}")
             
             # Clean up
             os.remove(tmp_path)
         except Exception as e:
+            print(f"❌ Face API error: {str(e)}")
             errors["face"] = str(e)
             results["face"] = {"prediction": "Unknown", "confidence": 0.0}
     else:
@@ -260,6 +272,11 @@ async def predict_fusion(
     text_valid = results["text"]["prediction"] != "Unknown"
     voice_valid = results["voice"]["prediction"] != "Unknown"
     face_valid = results["face"]["prediction"] != "Unknown"
+    
+    print(f"🔍 Fusion validation (simple endpoint):")
+    print(f"   Text valid: {text_valid} (prediction: {results['text'].get('prediction')})")
+    print(f"   Voice valid: {voice_valid} (prediction: {results['voice'].get('prediction')})")
+    print(f"   Face valid: {face_valid} (prediction: {results['face'].get('prediction')})")
     
     if text_valid and voice_valid:
         if face_valid:
