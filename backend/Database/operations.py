@@ -15,46 +15,64 @@ from .models import (
     create_user_report, create_session_summary_report, create_analysis_record
 )
 
-# Get database instance
-db = get_db()
+# Get database instance (lazy loading)
+db = None
+
+def get_database():
+    """Get database instance with lazy loading"""
+    global db
+    if db is None:
+        try:
+            db = get_db()
+            print("✅ Database connected successfully")
+        except Exception as e:
+            print(f"⚠️ Database connection failed: {e}")
+            print("🔄 Running in memory mode - database operations will be skipped")
+            db = None
+    return db
 
 # Ensure indexes for performance and constraints
 def setup_indexes():
     """Set up database indexes for performance and constraints"""
+    db_instance = get_database()
+    if db_instance is None:
+        print("⚠️ Skipping database setup - no connection available")
+        return
+    
     # Users collection - email must be unique
-    db.users.create_index("email", unique=True)
+    db_instance.users.create_index("email", unique=True)
     
     # Sessions collection - index by user_id for faster queries
-    db.sessions.create_index("user_id")
+    db_instance.sessions.create_index("user_id")
     
     # Data collections - index by session_id
-    db.voice_data.create_index("session_id")
-    db.text_data.create_index("session_id")
-    db.video_data.create_index("session_id")
+    db_instance.voice_data.create_index("session_id")
+    db_instance.text_data.create_index("session_id")
+    db_instance.video_data.create_index("session_id")
     
     # Results collection - index by session_id
-    db.detection_results.create_index("session_id")
+    db_instance.detection_results.create_index("session_id")
     
     # S3-based collections - index by session_id and data_type
-    db.voice_data_s3.create_index([("session_id", 1), ("data_type", 1)])
-    db.face_data_s3.create_index([("session_id", 1), ("data_type", 1)])
-    db.text_data_s3.create_index([("session_id", 1), ("data_type", 1)])
-
+    db_instance.voice_data_s3.create_index([("session_id", 1), ("data_type", 1)])
+    db_instance.face_data_s3.create_index([("session_id", 1), ("data_type", 1)])
+    db_instance.text_data_s3.create_index([("session_id", 1), ("data_type", 1)])
+    
     # Reports collection - index by user_id, session_id, and report_type
-    db.user_reports.create_index([("user_id", 1), ("timestamp", -1)])
-    db.user_reports.create_index([("session_id", 1), ("report_type", 1)])
-    db.user_reports.create_index("timestamp")
+    db_instance.user_reports.create_index([("user_id", 1), ("timestamp", -1)])
+    db_instance.user_reports.create_index([("session_id", 1), ("report_type", 1)])
+    db_instance.user_reports.create_index("timestamp")
     
     # Analyses collection - index by user_id, analysis_id, and timestamp
-    db.analyses.create_index([("user_id", 1), ("timestamp", -1)])
-    db.analyses.create_index("analysis_id", unique=True)
-    db.analyses.create_index("session_id")
-    db.analyses.create_index("status")
+    db_instance.analyses.create_index([("user_id", 1), ("timestamp", -1)])
+    db_instance.analyses.create_index("analysis_id", unique=True)
+    db_instance.analyses.create_index("session_id")
+    db_instance.analyses.create_index("status")
     
     # Simple reports collection - index by user_id, module_type, and timestamp
-    db.simple_reports.create_index([("user_id", 1), ("timestamp", -1)])
-    db.simple_reports.create_index([("user_id", 1), ("module_type", 1)])
-    db.simple_reports.create_index("session_id")
+    db_instance.simple_reports.create_index([("user_id", 1), ("timestamp", -1)])
+    db_instance.simple_reports.create_index([("user_id", 1), ("module_type", 1)])
+    db_instance.simple_reports.create_index("session_id")
 
 # Initialize database indexes on module import
 try:

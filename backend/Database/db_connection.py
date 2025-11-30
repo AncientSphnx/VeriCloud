@@ -21,10 +21,10 @@ if MONGO_URI:
     MONGO_DB = MONGO_URI.split('/')[-1].split('?')[0] if '/' in MONGO_URI else 'LieDetection'
 else:
     # Fallback to individual components
-    MONGO_USER = os.getenv('MONGO_USER', 'User Name')
-    MONGO_PASS = os.getenv('MONGO_PASS', 'Password')
-    MONGO_HOST = os.getenv('MONGO_HOST', 'Cluster name')
-    MONGO_DB = os.getenv('MONGO_DB', 'DB Name')
+    MONGO_USER = os.getenv('MONGO_USER', 'admin')
+    MONGO_PASS = os.getenv('MONGO_PASS', 'password')
+    MONGO_HOST = os.getenv('MONGO_HOST', 'cluster.mongodb.net')
+    MONGO_DB = os.getenv('MONGO_DB', 'LieDetection')
 
     # Build the MongoDB URI
     MONGODB_URI = f"mongodb+srv://{quote_plus(MONGO_USER)}:{quote_plus(MONGO_PASS)}@{MONGO_HOST}/{MONGO_DB}?retryWrites=true&w=majority"

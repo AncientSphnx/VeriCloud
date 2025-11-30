@@ -27,8 +27,13 @@ try:
         update_analysis_status, add_analysis_error, create_new_session
     )
     DB_INTEGRATION_AVAILABLE = True
+    print("✅ Database integration available")
 except ImportError as e:
     print(f"⚠️ Database integration not available: {e}")
+    DB_INTEGRATION_AVAILABLE = False
+except Exception as e:
+    print(f"⚠️ Database connection failed: {e}")
+    print("🔄 Running without database storage (fusion results only)")
     DB_INTEGRATION_AVAILABLE = False
 
 app = FastAPI()
@@ -348,14 +353,17 @@ async def predict_fusion_with_storage(
     
     try:
         # Step 1: Create analysis record in MongoDB
-        try:
-            create_new_analysis(user_id, session_id, analysis_id)
-            update_analysis_status(analysis_id, "processing", {
-                "processing_start_time": datetime.utcnow()
-            })
-        except Exception as e:
-            print(f"⚠️ Failed to create analysis record: {e}")
-            # Continue anyway - we'll still return results
+        if DB_INTEGRATION_AVAILABLE:
+            try:
+                create_new_analysis(user_id, session_id, analysis_id)
+                update_analysis_status(analysis_id, "processing", {
+                    "processing_start_time": datetime.utcnow()
+                })
+            except Exception as e:
+                print(f"⚠️ Failed to create analysis record: {e}")
+                # Continue anyway - we'll still return results
+        else:
+            print("🔄 Skipping database storage - running in memory mode")
         
         results = {}
         errors = {}
@@ -371,14 +379,17 @@ async def predict_fusion_with_storage(
                     tmp_path = tmp.name
                 
                 # Upload to S3
-                try:
-                    video_s3_data = upload_analysis_file(tmp_path, user_id, analysis_id, 'video')
-                    file_urls['video'] = video_s3_data
-                    
-                    # Update MongoDB with video file info
-                    update_analysis_files(analysis_id, 'video', video_s3_data)
-                except Exception as e:
-                    print(f"⚠️ Failed to upload video to S3: {e}")
+                if DB_INTEGRATION_AVAILABLE:
+                    try:
+                        video_s3_data = upload_analysis_file(tmp_path, user_id, analysis_id, 'video')
+                        file_urls['video'] = video_s3_data
+                        
+                        # Update MongoDB with video file info
+                        update_analysis_files(analysis_id, 'video', video_s3_data)
+                    except Exception as e:
+                        print(f"⚠️ Failed to upload video to S3: {e}")
+                else:
+                    print("🔄 Skipping S3 upload - running in memory mode")
                 
                 # Call Face API
                 try:
@@ -388,16 +399,24 @@ async def predict_fusion_with_storage(
                         print(f"👤 Face API result: {results['face']}")
                         
                         # Store face results in MongoDB
-                        update_analysis_results(analysis_id, 'face', {
-                            'prediction': results["face"].get('prediction'),
-                            'confidence': results["face"].get('confidence'),
-                            'features': results["face"].get('features')
-                        })
+                        if DB_INTEGRATION_AVAILABLE:
+                            try:
+                                update_analysis_results(analysis_id, 'face', {
+                                    'prediction': results["face"].get('prediction'),
+                                    'confidence': results["face"].get('confidence'),
+                                    'features': results["face"].get('features')
+                                })
+                            except Exception as e:
+                                print(f"⚠️ Failed to store face results: {e}")
                 except Exception as e:
                     print(f"❌ Face API error: {str(e)}")
                     errors["face"] = str(e)
                     results["face"] = {"prediction": "Unknown", "confidence": 0.0}
-                    add_analysis_error(analysis_id, f"Face analysis failed: {str(e)}")
+                    if DB_INTEGRATION_AVAILABLE:
+                        try:
+                            add_analysis_error(analysis_id, f"Face analysis failed: {str(e)}")
+                        except Exception as db_e:
+                            print(f"⚠️ Failed to store error: {db_e}")
                 
                 # Clean up temp file
                 os.remove(tmp_path)
