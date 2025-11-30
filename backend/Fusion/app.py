@@ -352,11 +352,14 @@ async def predict_fusion_with_storage(
                 
                 # Call Face API
                 try:
+                    print(f"🔍 Calling Face API at: {FACE_API}")
                     with open(tmp_path, 'rb') as f:
                         files = {'file': (video_file.filename, f, video_file.content_type)}
                         face_response = requests.post(FACE_API, files=files, timeout=300)
+                        print(f"👤 Face API response status: {face_response.status_code}")
                         face_response.raise_for_status()
                         results["face"] = face_response.json()
+                        print(f"👤 Face API result: {results['face']}")
                         
                         # Store face results in MongoDB
                         update_analysis_results(analysis_id, 'face', {
@@ -365,6 +368,7 @@ async def predict_fusion_with_storage(
                             'features': results["face"].get('features')
                         })
                 except Exception as e:
+                    print(f"❌ Face API error: {str(e)}")
                     errors["face"] = str(e)
                     results["face"] = {"prediction": "Unknown", "confidence": 0.0}
                     add_analysis_error(analysis_id, f"Face analysis failed: {str(e)}")
@@ -400,11 +404,14 @@ async def predict_fusion_with_storage(
                 
                 # Call Voice API
                 try:
+                    print(f"🔍 Calling Voice API at: {VOICE_API}")
                     with open(tmp_path, 'rb') as f:
                         files = {'file': (audio_file.filename, f, audio_file.content_type)}
                         voice_response = requests.post(VOICE_API, files=files, timeout=300)
+                        print(f"🎤 Voice API response status: {voice_response.status_code}")
                         voice_response.raise_for_status()
                         results["voice"] = voice_response.json()
+                        print(f"🎤 Voice API result: {results['voice']}")
                         
                         # Store voice results in MongoDB
                         update_analysis_results(analysis_id, 'voice', {
@@ -413,6 +420,7 @@ async def predict_fusion_with_storage(
                             'features': results["voice"].get('features')
                         })
                 except Exception as e:
+                    print(f"❌ Voice API error: {str(e)}")
                     errors["voice"] = str(e)
                     results["voice"] = {"prediction": "Unknown", "confidence": 0.0}
                     add_analysis_error(analysis_id, f"Voice analysis failed: {str(e)}")
@@ -445,9 +453,12 @@ async def predict_fusion_with_storage(
             
             # Call Text API
             text_form = {"text": text}
+            print(f"🔍 Calling Text API at: {TEXT_API}")
             text_response = requests.post(TEXT_API, data=text_form, timeout=60)
+            print(f"📝 Text API response status: {text_response.status_code}")
             text_response.raise_for_status()
             results["text"] = text_response.json()
+            print(f"📝 Text API result: {results['text']}")
             
             # Store text results in MongoDB
             update_analysis_results(analysis_id, 'text', {
@@ -464,6 +475,11 @@ async def predict_fusion_with_storage(
         text_valid = results["text"]["prediction"] != "Unknown"
         voice_valid = results["voice"]["prediction"] != "Unknown"
         face_valid = results["face"]["prediction"] != "Unknown"
+        
+        print(f"🔍 Fusion validation:")
+        print(f"   Text valid: {text_valid} (prediction: {results['text'].get('prediction')})")
+        print(f"   Voice valid: {voice_valid} (prediction: {results['voice'].get('prediction')})")
+        print(f"   Face valid: {face_valid} (prediction: {results['face'].get('prediction')})")
         
         if text_valid and voice_valid:
             if face_valid:
