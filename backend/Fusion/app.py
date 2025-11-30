@@ -42,10 +42,35 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Backend endpoints
+# Backend API Endpoints (with local fallbacks)
 TEXT_API = "https://vericloud-text-tho9.onrender.com/predict_text"
 VOICE_API = "https://vericloud-y9c9.onrender.com/predict"
 FACE_API = "https://vericloud-face-s8zm.onrender.com/predict"
+
+# Local fallback URLs
+LOCAL_TEXT_API = "http://127.0.0.1:8000/predict_text"
+LOCAL_VOICE_API = "http://127.0.0.1:8001/predict"
+LOCAL_FACE_API = "http://127.0.0.1:8002/predict"
+
+def call_api_with_fallback(render_url: str, local_url: str, *args, **kwargs):
+    """Try Render API first, fallback to local API if it fails"""
+    try:
+        print(f"🔍 Trying Render API at: {render_url}")
+        response = requests.post(render_url, *args, **kwargs)
+        print(f"📡 Render API response status: {response.status_code}")
+        response.raise_for_status()
+        return response.json()
+    except Exception as render_error:
+        print(f"❌ Render API failed: {str(render_error)}")
+        print(f"🔄 Falling back to local API at: {local_url}")
+        try:
+            response = requests.post(local_url, *args, **kwargs)
+            print(f"🏠 Local API response status: {response.status_code}")
+            response.raise_for_status()
+            return response.json()
+        except Exception as local_error:
+            print(f"❌ Local API also failed: {str(local_error)}")
+            raise render_error  # Raise the original Render error
 
 # ----------------------------
 # S3 Configuration
@@ -197,12 +222,8 @@ async def predict_fusion(
     
     # 1. Text Analysis
     try:
-        print(f"🔍 Calling Text API at: {TEXT_API}")
         text_form = {"text": text}
-        text_response = requests.post(TEXT_API, data=text_form)
-        print(f"📝 Text API response status: {text_response.status_code}")
-        text_response.raise_for_status()
-        results["text"] = text_response.json()
+        results["text"] = call_api_with_fallback(TEXT_API, LOCAL_TEXT_API, data=text_form)
         print(f"📝 Text API result: {results['text']}")
     except Exception as e:
         print(f"❌ Text API error: {str(e)}")
@@ -219,13 +240,9 @@ async def predict_fusion(
                 tmp_path = tmp.name
             
             # Call voice API
-            print(f"🔍 Calling Voice API at: {VOICE_API}")
             with open(tmp_path, 'rb') as f:
                 files = {'file': (audio_file.filename, f, audio_file.content_type)}
-                voice_response = requests.post(VOICE_API, files=files)
-                print(f"🎤 Voice API response status: {voice_response.status_code}")
-                voice_response.raise_for_status()
-                results["voice"] = voice_response.json()
+                results["voice"] = call_api_with_fallback(VOICE_API, LOCAL_VOICE_API, files=files)
                 print(f"🎤 Voice API result: {results['voice']}")
             
             # Clean up
@@ -248,13 +265,9 @@ async def predict_fusion(
                 tmp_path = tmp.name
             
             # Call face API
-            print(f"🔍 Calling Face API at: {FACE_API}")
             with open(tmp_path, 'rb') as f:
                 files = {'file': (video_file.filename, f, video_file.content_type)}
-                face_response = requests.post(FACE_API, files=files)
-                print(f"👤 Face API response status: {face_response.status_code}")
-                face_response.raise_for_status()
-                results["face"] = face_response.json()
+                results["face"] = call_api_with_fallback(FACE_API, LOCAL_FACE_API, files=files)
                 print(f"👤 Face API result: {results['face']}")
             
             # Clean up
@@ -369,13 +382,9 @@ async def predict_fusion_with_storage(
                 
                 # Call Face API
                 try:
-                    print(f"🔍 Calling Face API at: {FACE_API}")
                     with open(tmp_path, 'rb') as f:
                         files = {'file': (video_file.filename, f, video_file.content_type)}
-                        face_response = requests.post(FACE_API, files=files, timeout=300)
-                        print(f"👤 Face API response status: {face_response.status_code}")
-                        face_response.raise_for_status()
-                        results["face"] = face_response.json()
+                        results["face"] = call_api_with_fallback(FACE_API, LOCAL_FACE_API, files=files, timeout=300)
                         print(f"👤 Face API result: {results['face']}")
                         
                         # Store face results in MongoDB
@@ -421,13 +430,9 @@ async def predict_fusion_with_storage(
                 
                 # Call Voice API
                 try:
-                    print(f"🔍 Calling Voice API at: {VOICE_API}")
                     with open(tmp_path, 'rb') as f:
                         files = {'file': (audio_file.filename, f, audio_file.content_type)}
-                        voice_response = requests.post(VOICE_API, files=files, timeout=300)
-                        print(f"🎤 Voice API response status: {voice_response.status_code}")
-                        voice_response.raise_for_status()
-                        results["voice"] = voice_response.json()
+                        results["voice"] = call_api_with_fallback(VOICE_API, LOCAL_VOICE_API, files=files, timeout=300)
                         print(f"🎤 Voice API result: {results['voice']}")
                         
                         # Store voice results in MongoDB
@@ -470,11 +475,7 @@ async def predict_fusion_with_storage(
             
             # Call Text API
             text_form = {"text": text}
-            print(f"🔍 Calling Text API at: {TEXT_API}")
-            text_response = requests.post(TEXT_API, data=text_form, timeout=60)
-            print(f"📝 Text API response status: {text_response.status_code}")
-            text_response.raise_for_status()
-            results["text"] = text_response.json()
+            results["text"] = call_api_with_fallback(TEXT_API, LOCAL_TEXT_API, data=text_form, timeout=60)
             print(f"📝 Text API result: {results['text']}")
             
             # Store text results in MongoDB
